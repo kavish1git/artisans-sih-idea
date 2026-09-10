@@ -36,3 +36,7 @@ desktop.ini
 # IDEs
 .vscode/
 .idea/
+
+# Binaries
+*.exe
+
