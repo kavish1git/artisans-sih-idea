@@ -63,6 +63,7 @@ class TestFullPipeline:
             background="off-white",
             aspect_ratio="1:1",
             enhancement="auto",
+            skip_quality_gate=True,
         )
 
         assert result["status"] == "success"
@@ -78,5 +79,13 @@ class TestFullPipeline:
 
     def test_corrupt_file_handling(self):
         corrupt_path = TEST_IMAGES_DIR / "corrupted.jpg"
+        # When quality gate is active, pipeline catches corrupt file and returns needs_retake structured decision
+        gate_res = process_product_image(corrupt_path)
+        assert gate_res["status"] == "needs_retake"
+        assert gate_res["accepted"] is False
+        assert any(i["code"] == "IMAGE_CORRUPTED" for i in gate_res["issues"])
+
+        # When bypassing quality gate, underlying low-level decoder raises ImageValidationError
         with pytest.raises(ImageValidationError):
-            process_product_image(corrupt_path)
+            process_product_image(corrupt_path, skip_quality_gate=True)
+

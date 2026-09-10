@@ -1,0 +1,26 @@
+# Quality Gate Configuration Thresholds for SIH26090
+# These parameters govern the pre-flight gate preventing blind catalog processing.
+
+# Sharpness & Blur
+blur_threshold_variance: 45.0   # Minimum normalized Laplacian variance
+blur_score_min: 40              # Minimum blur score (0-100)
+
+# Lighting & Exposure
+brightness_min: 48.0            # Minimum mean luminance (0-255)
+brightness_max: 225.0           # Maximum mean luminance (0-255)
+underexposed_pixel_pct: 0.45    # Max fraction of pixels crushed to near-black (<15)
+overexposed_pixel_pct: 0.25     # Max fraction of pixels blown to near-white (>245)
+
+# Spatial Dimensions
+minimum_width: 400              # Minimum image width in pixels
+minimum_height: 400             # Minimum image height in pixels
+
+# Framing & Visibility
+minimum_product_area_pct: 10.0  # Product must occupy >= 10% of image area
+maximum_product_area_pct: 98.0  # Occupancy > 98% implies edges are cut off
+border_cutoff_margin_px: 4      # Distance to frame edge for cut-off detection
+max_clutter_ratio: 0.70         # Background edge clutter threshold
+
+# Model Confidence Thresholds
+minimum_detection_confidence: 0.50       # Min confidence that a craft exists
+minimum_classification_confidence: 0.50  # Min confidence for identifiable craft category

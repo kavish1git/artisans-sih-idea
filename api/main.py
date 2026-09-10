@@ -74,18 +74,26 @@ async def health_check():
 @app.post("/api/v1/quality")
 async def check_quality_only(image: UploadFile = File(...)):
     """
-    Fast pre-flight image quality check endpoint.
-    Returns quality score and actionable artisan voice feedback before full processing.
+    Fast pre-flight image quality and identifiability gate endpoint.
+    Returns quality scores, issues, and actionable artisan voice feedback before full processing.
     """
     try:
         content = await image.read()
         validate_image_bytes(content, filename=image.filename)
-        quality_report = analyze_image_quality(content)
+        from src.quality_gate import evaluate_image_gate
+        gate_report = evaluate_image_gate(content)
         return {
             "status": "success",
-            "overall_score": quality_report["overall_score"],
-            "recommendation": quality_report["recommendation"],
-            "metrics": quality_report,
+            "accepted": gate_report["accepted"],
+            "action": gate_report["action"],
+            "overall_score": gate_report["quality"]["overall_score"],
+            "recommendation": gate_report["voice_prompt"],
+            "quality": gate_report["quality"],
+            "issues": gate_report["issues"],
+            "retake_instruction": gate_report["retake_instruction"],
+            "suggestions": gate_report["suggestions"],
+            "product_detection": gate_report.get("product_detection", {}),
+            "metrics": gate_report["quality"],
         }
     except ImageValidationError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -108,7 +116,9 @@ async def process_image_endpoint(
 ):
     """
     Main fully automatic cataloging transformation pipeline endpoint.
-    Accepts ONLY the raw artisan image and automatically determines:
+    Accepts ONLY the raw artisan image, runs the intelligent quality & identifiability gate,
+    and automatically determines:
+    - Usability & retake necessity
     - Handicraft category & craft identity
     - Visual attributes (color names, shape, orientation, pattern, texture)
     - Optimal contrast background, grounding shadow, and framing.
@@ -145,14 +155,21 @@ async def process_image_endpoint(
         base_url = str(request.base_url).rstrip("/")
 
         # Handle retake recommendations gracefully
-        if result.get("status") == "needs_retake":
+        if result.get("status") == "needs_retake" or result.get("accepted") is False:
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
                 content={
                     "status": "needs_retake",
-                    "reason": result.get("reason", "The product could not be isolated clearly."),
-                    "voice_prompt": result.get("voice_prompt", "Please place the craft on a contrasting surface and retake."),
+                    "accepted": False,
+                    "action": "RETAKE_PHOTO",
+                    "reason": result.get("reason", "Photo needs to be retaken."),
+                    "voice_prompt": result.get("voice_prompt", "Please take another photo with better lighting."),
+                    "quality": result.get("quality", {}),
+                    "issues": result.get("issues", []),
+                    "retake_instruction": result.get("retake_instruction", "Hold the phone steady and take another photo."),
+                    "suggestions": result.get("suggestions", []),
                     "quality_score": result.get("quality_score", 0),
+                    "product_detection": result.get("product_detection", {}),
                     "processing": {"time_ms": result.get("processing_time_ms", 0)},
                 },
             )
@@ -177,7 +194,11 @@ async def process_image_endpoint(
 
         response_payload = {
             "status": "success",
+            "accepted": True,
+            "action": "PROCESS_IMAGE",
+            "processing_status": result.get("processing_status", "SUCCESS"),
             "product": result.get("product", {}),
+            "product_detection": result.get("product_detection", {}),
             "visual_attributes": result.get("visual_attributes", {}),
             "geometry": result.get("geometry", {}),
             "image": {
@@ -188,6 +209,9 @@ async def process_image_endpoint(
                 "height": 1080,
             },
             "quality": result.get("quality", {}),
+            "issues": result.get("issues", []),
+            "retake_instruction": result.get("retake_instruction", ""),
+            "suggestions": result.get("suggestions", []),
             "processing": result.get("processing", {}),
             "voice_prompt": result.get("voice_prompt", ""),
             "warnings": result.get("warnings", []),
@@ -198,11 +222,10 @@ async def process_image_endpoint(
             "after_score": result.get("quality", {}).get("after", 0),
             "improvement": result.get("quality", {}).get("improvement", 0),
             "dominant_colors": result.get("visual_attributes", {}).get("palette_hex", []),
-            "recommendation": result.get("voice_prompt", ""),
             "processing_time_ms": result.get("processing", {}).get("time_ms", 0),
         }
 
-        return JSONResponse(content=response_payload)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=response_payload)
 
 
     except Exception as e:

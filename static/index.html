@@ -496,6 +496,54 @@
       </ul>
     </div>
 
+    <!-- Screen 2B: Intelligent Quality Gate Retake Card (Photo Not Clear) -->
+    <div class="card" id="retakeCard" style="display: none; border-left: 6px solid var(--danger); background: #FFFBFB;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="background: #FEE2E2; color: var(--danger); width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold;">
+            ⚠️
+          </div>
+          <div>
+            <h3 style="font-size: 1.35rem; font-weight: 800; color: #991B1B; letter-spacing: -0.02em;">PHOTO NOT CLEAR</h3>
+            <p style="font-size: 0.9rem; color: #7F1D1D;">We found a problem with your photo and cannot make a quality catalog yet.</p>
+          </div>
+        </div>
+        <button class="btn" id="speakRetakeBtn" style="background: #FEE2E2; color: #991B1B; padding: 8px 16px; font-size: 0.9rem; border: 1px solid #FCA5A5; font-weight: 700;">
+          🔊 Listen
+        </button>
+      </div>
+
+      <!-- Issues List -->
+      <div style="margin-bottom: 20px;">
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #991B1B; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.05em;">
+          Problems Detected:
+        </h4>
+        <div id="retakeIssuesList" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Actionable Artisan Instructions -->
+      <div style="background: #FFFFFF; border: 1px solid #FECACA; border-radius: 14px; padding: 18px; margin-bottom: 24px;">
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #1E293B; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.05em;">
+          Please follow these simple steps:
+        </h4>
+        <ul id="retakeSuggestionsList" style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.95rem; color: #334155;">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <!-- Big Retake Button -->
+      <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" id="retakePhotoBtn" style="padding: 15px 32px; font-size: 1.1rem; background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); font-weight: 800;">
+          📷 RETAKE PHOTO
+        </button>
+        <button class="btn btn-outline" id="retakeUploadBtn" style="padding: 15px 24px; font-size: 1rem; font-weight: 600;">
+          📁 Choose Different Photo
+        </button>
+      </div>
+    </div>
+
     <!-- Screen 3: Results Display (Product Profile + Comparison) -->
     <div id="resultsView" style="display: none;">
 
@@ -639,16 +687,71 @@
     cameraInput.addEventListener('change', (e) => {
       if (e.target.files.length) handleFile(e.target.files[0]);
     });
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) handleFile(e.target.files[0]);
+    const retakeCard = document.getElementById("retakeCard");
+    const retakePhotoBtn = document.getElementById("retakePhotoBtn");
+    const retakeUploadBtn = document.getElementById("retakeUploadBtn");
+    const retakeIssuesList = document.getElementById("retakeIssuesList");
+    const retakeSuggestionsList = document.getElementById("retakeSuggestionsList");
+    const speakRetakeBtn = document.getElementById("speakRetakeBtn");
+
+    retakePhotoBtn.addEventListener("click", () => {
+      cameraInput.click();
+    });
+    retakeUploadBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+    speakRetakeBtn.addEventListener("click", () => {
+      speakGuidance(currentVoiceText);
     });
 
     function resetToUpload() {
       uploadCard.style.display = "block";
       progressCard.style.display = "none";
+      retakeCard.style.display = "none";
       resultsView.style.display = "none";
       cameraInput.value = "";
       fileInput.value = "";
+    }
+
+    function renderRetakeCard(data) {
+      progressCard.style.display = "none";
+      uploadCard.style.display = "none";
+      resultsView.style.display = "none";
+      retakeCard.style.display = "block";
+
+      // Populate issues
+      retakeIssuesList.innerHTML = "";
+      const issues = data.issues || [];
+      if (issues.length === 0) {
+        const issueDiv = document.createElement("div");
+        issueDiv.style.cssText = "background: #FEE2E2; color: #991B1B; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 0.95rem;";
+        issueDiv.textContent = `⚠ ${data.reason || "Photo quality is too low"}`;
+        retakeIssuesList.appendChild(issueDiv);
+      } else {
+        issues.forEach(iss => {
+          const issueDiv = document.createElement("div");
+          issueDiv.style.cssText = "background: #FEE2E2; color: #991B1B; padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 0.95rem;";
+          issueDiv.textContent = `⚠ ${iss.message}`;
+          retakeIssuesList.appendChild(issueDiv);
+        });
+      }
+
+      // Populate suggestions
+      retakeSuggestionsList.innerHTML = "";
+      const suggestions = (data.suggestions && data.suggestions.length) ? data.suggestions : [
+        "Hold the phone steady and tap to focus",
+        "Move closer so the product fills more of the frame",
+        "Use bright, natural daylight without harsh glare"
+      ];
+      suggestions.forEach(tip => {
+        const li = document.createElement("li");
+        li.style.cssText = "display: flex; align-items: flex-start; gap: 8px; font-weight: 600;";
+        li.innerHTML = `<span style="color: var(--success); font-weight: 800;">✓</span> <span>${tip}</span>`;
+        retakeSuggestionsList.appendChild(li);
+      });
+
+      currentVoiceText = data.voice_prompt || data.retake_instruction || "Photo needs to be retaken.";
+      speakGuidance(currentVoiceText);
     }
 
     async function handleFile(file) {
@@ -659,6 +762,7 @@
 
       // 1. Switch to progress view
       uploadCard.style.display = "none";
+      retakeCard.style.display = "none";
       resultsView.style.display = "none";
       progressCard.style.display = "block";
 
@@ -686,12 +790,9 @@
 
         const data = await response.json();
 
-        // Check if retake is recommended
-        if (data.status === "needs_retake") {
-          progressCard.style.display = "none";
-          uploadCard.style.display = "block";
-          alert(data.reason + "\n\nArtisan tip: " + data.voice_prompt);
-          speakGuidance(data.voice_prompt);
+        // Check if gate rejected photo
+        if (data.accepted === false || data.status === "needs_retake" || data.action === "RETAKE_PHOTO") {
+          renderRetakeCard(data);
           return;
         }
 

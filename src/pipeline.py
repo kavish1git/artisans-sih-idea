@@ -66,6 +66,7 @@ class ProductImagePipeline:
         alpha_matting: bool = True,
         detection_mode: str = "auto",
         save_files: bool = True,
+        skip_quality_gate: bool = False,
     ) -> Dict[str, Any]:
         """
         Executes fully automatic production cataloging pipeline from a single photo.
@@ -73,22 +74,33 @@ class ProductImagePipeline:
         start_time = time.perf_counter()
         warnings: List[str] = []
 
-        # 1. Safe Load & Initial Quality Analysis (Before)
+        # 1. Intelligent Pre-flight Quality & Identifiability Gate
+        if not skip_quality_gate:
+            from src.quality_gate import evaluate_image_gate
+            gate_decision = evaluate_image_gate(source)
+
+            if not gate_decision["accepted"]:
+                proc_time = round((time.perf_counter() - start_time) * 1000, 1)
+                primary_issue = gate_decision["issues"][0]["message"] if gate_decision["issues"] else "Photo needs to be retaken."
+                return {
+                    "status": "needs_retake",
+                    "accepted": False,
+                    "action": "RETAKE_PHOTO",
+                    "reason": primary_issue,
+                    "voice_prompt": gate_decision["voice_prompt"],
+                    "quality": gate_decision["quality"],
+                    "issues": gate_decision["issues"],
+                    "retake_instruction": gate_decision["retake_instruction"],
+                    "suggestions": gate_decision["suggestions"],
+                    "quality_score": gate_decision["quality"]["overall_score"],
+                    "product_detection": gate_decision.get("product_detection", {}),
+                    "processing_time_ms": proc_time,
+                }
+
+        # Safe Load for Pipeline Processing
         bgr_orig, rgb_pil = load_image_safely(source)
         rgb_np = np.array(rgb_pil)
         quality_before = analyze_image_quality(bgr_orig)
-
-        # Retake check 1: Completely unusable photo (e.g. pitch black or totally blurry)
-        if quality_before["overall_score"] < 25:
-            proc_time = round((time.perf_counter() - start_time) * 1000, 1)
-            return {
-                "status": "needs_retake",
-                "reason": "The photo quality is too low for automatic cataloging.",
-                "voice_prompt": quality_before.get("recommendation", "Please move to a brighter place and retake the photo."),
-                "quality_score": quality_before["overall_score"],
-                "quality_before": quality_before,
-                "processing_time_ms": proc_time,
-            }
 
         # 2. Product Segmentation with Automatic Cascade
         # Configure model if specified, otherwise rely on default IS-Net with fallbacks
@@ -247,15 +259,24 @@ class ProductImagePipeline:
             f"Image cleaned, lighting improved, and prepared for marketplace."
         )
 
+        # Post-Processing Quality Verification Check
+        processing_status = "SUCCESS" if (quality_after["overall_score"] >= 45 and product_area_pct >= 4.0) else "FAILED"
+
         return {
             "status": "success",
+            "accepted": True,
+            "action": "PROCESS_IMAGE",
+            "processing_status": processing_status,
             "product": {
                 "name": product_detection["name"],
                 "category": product_detection["category"],
+                "subcategory": product_detection.get("subcategory", ""),
+                "craft_type": product_detection.get("craft_type", ""),
                 "confidence": product_detection["confidence"],
                 "confidence_label": product_detection["confidence_label"],
                 "display_text": product_detection["display_text"],
             },
+            "product_detection": product_detection,
             "visual_attributes": {
                 "colors": visual_attrs["dominant_colors"],
                 "palette_hex": visual_attrs["palette_hex"],
@@ -282,6 +303,9 @@ class ProductImagePipeline:
                 "metrics_before": quality_before,
                 "metrics_after": quality_after,
             },
+            "issues": [],
+            "retake_instruction": "Photo passed quality gate and catalog image created successfully.",
+            "suggestions": [],
             "processing": {
                 "time_ms": proc_time,
                 "segmentation_engine": seg_res.model_used,
@@ -328,6 +352,7 @@ def process_product_image(
     model_name: str = "auto",
     alpha_matting: bool = True,
     detection_mode: str = "auto",
+    skip_quality_gate: bool = False,
 ) -> Dict[str, Any]:
     """
     Master functional entrypoint for fully automatic image processing.
@@ -348,5 +373,6 @@ def process_product_image(
         model_name=model_name,
         alpha_matting=alpha_matting,
         detection_mode=detection_mode,
+        skip_quality_gate=skip_quality_gate,
     )
 

@@ -221,9 +221,13 @@ class ProductClassifier:
 
         major_margin = major_prob - alt_major_prob
 
-        # 6. Confidence Calibration & Thresholding (Requirement 3)
-        # Never accept a high confidence unless the margin over alternative craft categories is significant
-        if major_prob >= 0.45 and major_margin >= 0.15:
+        # 6. Confidence Calibration & Thresholding (Requirement 3 & 7)
+        # If the individual top class probability is below 0.20, distribution is flat/noise -> classify as Unknown
+        if best_prob < 0.20 or major_prob < 0.35:
+            confidence_status = "low"
+            calibrated_conf = round(float(np.clip(best_prob * 2.0, 0.15, 0.45)), 2)
+            best_category = "unknown"
+        elif major_prob >= 0.45 and major_margin >= 0.15:
             confidence_status = "high"
             calibrated_conf = round(float(np.clip(0.85 + (major_margin * 0.2), 0.85, 0.95)), 2)
         elif major_prob >= 0.25 and major_margin >= 0.05:
