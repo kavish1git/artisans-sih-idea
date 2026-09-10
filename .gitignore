@@ -37,6 +37,8 @@ desktop.ini
 .vscode/
 .idea/
 
-# Binaries
+# Binaries & local databases
 *.exe
+*.db
+scratch*.txt
 
