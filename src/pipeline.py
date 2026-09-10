@@ -120,20 +120,34 @@ class ProductImagePipeline:
                 "processing_time_ms": proc_time,
             }
 
-        # Retake check 2: Empty or failed mask
-        fg_pixel_count = int(np.sum(seg_res.mask > 40))
-        total_pixels = seg_res.mask.size
-        product_area_pct = round(float((fg_pixel_count / total_pixels) * 100.0), 1)
+        # Saliency & Composition Suitability Check
+        from src.composition import analyze_composition_suitability
+        h_orig, w_orig = bgr_orig.shape[:2]
+        preserve_full_composition, comp_reason, comp_metrics = analyze_composition_suitability(
+            bgr_orig, mask=seg_res.mask
+        )
 
-        if product_area_pct < 0.8 or product_area_pct > 98.8:
-            proc_time = round((time.perf_counter() - start_time) * 1000, 1)
-            return {
-                "status": "needs_retake",
-                "reason": "The main product could not be separated clearly from the background.",
-                "voice_prompt": "Please place the product on a clear surface and take the photo again.",
-                "quality_before": quality_before,
-                "processing_time_ms": proc_time,
-            }
+        if preserve_full_composition:
+            # Preserve the entire photograph as a whole (e.g. textile stack, flatlay, full scene)
+            seg_res.mask = np.full((h_orig, w_orig), 255, dtype=np.uint8)
+            seg_res.bounding_box = {"x": 0, "y": 0, "width": w_orig, "height": h_orig}
+            transparent_pil = rgb_pil.convert("RGBA")
+            product_area_pct = 100.0
+        else:
+            # Retake check 2: Empty or failed mask
+            fg_pixel_count = int(np.sum(seg_res.mask > 40))
+            total_pixels = seg_res.mask.size
+            product_area_pct = round(float((fg_pixel_count / total_pixels) * 100.0), 1)
+
+            if product_area_pct < 0.8 or product_area_pct > 98.8:
+                proc_time = round((time.perf_counter() - start_time) * 1000, 1)
+                return {
+                    "status": "needs_retake",
+                    "reason": "The main product could not be separated clearly from the background.",
+                    "voice_prompt": "Please place the product on a clear surface and take the photo again.",
+                    "quality_before": quality_before,
+                    "processing_time_ms": proc_time,
+                }
 
         # 3. Automatic Product Detection & Indian Handicraft Recognition
         product_detection = detect_product(
@@ -155,15 +169,21 @@ class ProductImagePipeline:
 
         # 6. Proportional Aspect Ratio Alignment & Smart Centering
         resolved_ratio = "1:1" if aspect_ratio in ("auto", "default") else aspect_ratio
+        centered_pad = 0.03 if preserve_full_composition else 0.08
         centered_pil, final_crop_box = crop_and_center_product(
             wb_fixed,
             mask_or_bbox=seg_res.bounding_box,
             aspect_ratio=resolved_ratio,
-            padding=0.08,
+            padding=centered_pad,
         )
 
         # 7. Intelligent Grounding Shadow Handling
-        if shadow_mode == "auto":
+        if preserve_full_composition:
+            resolved_shadow = "none"
+            shadow_intensity = 0.0
+            grounded_pil = centered_pil
+            shadow_applied_desc = "none (full_composition)"
+        elif shadow_mode == "auto":
             resolved_shadow, shadow_intensity = ShadowHandler.select_automatic_shadow_mode(
                 centered_pil,
                 category=product_detection["category"],
@@ -183,10 +203,13 @@ class ProductImagePipeline:
             shadow_applied_desc = f"{resolved_shadow}_shadow"
         else:
             grounded_pil = centered_pil
-            shadow_applied_desc = "none"
+            if not preserve_full_composition:
+                shadow_applied_desc = "none"
 
         # 8. Intelligent Contrast-Aware Background Decision
-        if background == "auto":
+        if preserve_full_composition:
+            resolved_bg = "off-white" if background in ("auto", "default") else background
+        elif background == "auto":
             resolved_bg = MarketplaceGenerator.select_automatic_background(grounded_pil)
         else:
             resolved_bg = background

@@ -2,8 +2,8 @@
 # These parameters govern the pre-flight gate preventing blind catalog processing.
 
 # Sharpness & Blur
-blur_threshold_variance: 45.0   # Minimum normalized Laplacian variance
-blur_score_min: 40              # Minimum blur score (0-100)
+blur_threshold_variance: 35.0   # Minimum normalized Laplacian variance
+blur_score_min: 35              # Minimum blur score (0-100)
 
 # Lighting & Exposure
 brightness_min: 48.0            # Minimum mean luminance (0-255)

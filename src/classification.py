@@ -50,7 +50,7 @@ CATEGORY_SYNSET_MAPPING = {
     "terracotta_pottery": [883, 605, 899, 898, 710],              # Earthy clay vessels
     "phulkari_dupatta": [834, 783, 815, 614],                     # Stole, poncho, lace/embroidery, kimono
     "saree": [804, 614, 834],                                     # Sarong, drape, stole
-    "handloom_textile": [915, 834, 783, 407],                     # Wool, stole, textile drape
+    "handloom_textile": [915, 834, 783, 407, 434, 911, 885, 887, 804], # Wool, cloth, bath towel, velvet, vestment, textile drape
     "shawl": [834, 783, 915],                                     # Stole, poncho, woolen fabric
     "embroidery": [815, 834, 783],                                # Intricate threadwork/lace
     "basket": [431, 790, 563],                                    # 431=hamper, 790=shopping basket

@@ -151,7 +151,7 @@ class QualityGate:
             })
 
         # -------------------------------------------------------------
-        # 3. Blur & Sharpness Analysis (Laplacian Variance)
+        # 3. Blur & Sharpness Analysis (Multi-zone & Salience-Aware)
         # -------------------------------------------------------------
         std_dev = float(np.std(gray))
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
@@ -159,24 +159,48 @@ class QualityGate:
         # Contrast-normalized variance
         norm_variance = raw_variance if std_dev > 10.0 else raw_variance * (35.0 / (std_dev + 1e-3))
 
-        blur_thresh = float(self.thresholds.get("blur_threshold_variance", 45.0))
-        if norm_variance >= 110.0:
+        # Center / Subject Region Sharpness (prevents clean plain backgrounds from dragging down score)
+        center_y1, center_y2 = int(h * 0.15), int(h * 0.85)
+        center_x1, center_x2 = int(w * 0.15), int(w * 0.85)
+        center_roi = gray[center_y1:center_y2, center_x1:center_x2]
+        center_variance = float(cv2.Laplacian(center_roi, cv2.CV_64F).var()) if center_roi.size > 100 else norm_variance
+
+        # Local tile/patch sharpness to find high-frequency craft edges
+        step = 48
+        patch_vars = []
+        for py in range(0, h - step, step):
+            for px in range(0, w - step, step):
+                patch = gray[py:py + step, px:px + step]
+                patch_vars.append(float(cv2.Laplacian(patch, cv2.CV_64F).var()))
+
+        p90_patch = float(np.percentile(patch_vars, 90)) if patch_vars else norm_variance
+        max_patch = float(max(patch_vars)) if patch_vars else norm_variance
+
+        # Effective sharpness incorporates subject details
+        effective_variance = max(norm_variance, center_variance * 0.85, p90_patch * 0.45)
+
+        blur_thresh = float(self.thresholds.get("blur_threshold_variance", 35.0))
+        min_blur_score = int(self.thresholds.get("blur_score_min", 35))
+
+        if effective_variance >= 110.0:
             blur_score = 100
-        elif norm_variance >= blur_thresh:
-            blur_score = int(50 + (norm_variance - blur_thresh) / (110.0 - blur_thresh) * 50)
+        elif effective_variance >= blur_thresh:
+            blur_score = int(50 + (effective_variance - blur_thresh) / (110.0 - blur_thresh) * 50)
         else:
-            blur_score = max(5, int((norm_variance / blur_thresh) * 50))
+            blur_score = max(5, int((effective_variance / blur_thresh) * 50))
 
         # Only evaluate blur if image has reasonable dynamic range (not pitch dark or blown out)
         mean_lum_pre = float(np.mean(gray))
         if 35.0 <= mean_lum_pre <= 235.0:
-            if norm_variance < blur_thresh or blur_score < self.thresholds.get("blur_score_min", 40):
-                # Check for directional motion blur vs uniform defocus
-                sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3).var()
-                sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3).var()
-                ratio = max(sobel_x, sobel_y) / (min(sobel_x, sobel_y) + 1e-3)
+            # Check for directional motion blur vs uniform defocus
+            sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3).var()
+            sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3).var()
+            ratio = max(sobel_x, sobel_y) / (min(sobel_x, sobel_y) + 1e-3)
 
-                is_motion = ratio > 2.2 and norm_variance < 30.0
+            is_motion = ratio > 2.5 and (center_variance < 35.0 or norm_variance < 45.0)
+            is_defocus = (norm_variance < blur_thresh and center_variance < 32.0 and p90_patch < 75.0)
+
+            if is_motion or is_defocus:
                 detected_issues.append({
                     "code": "EXTREME_MOTION_BLUR" if is_motion else "BLUR_TOO_HIGH",
                     "severity": "high",
@@ -255,9 +279,9 @@ class QualityGate:
             })
         else:
             product_detected = True
-            # Largest contour as main product candidate
-            largest_c = max(valid_contours, key=cv2.contourArea)
-            bx, by, bw, bh = cv2.boundingRect(largest_c)
+            # Cluster valid contours to encompass the full craft/textile composition
+            all_pts = np.concatenate(valid_contours)
+            bx, by, bw, bh = cv2.boundingRect(all_pts)
             prod_box = (bx, by, bw, bh)
             product_area_pct = round(float((bw * bh) / total_area) * 100.0, 1)
 

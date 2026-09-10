@@ -684,9 +684,19 @@
       if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
     });
 
+    let progressTimers = [];
+    function clearProgressTimers() {
+      progressTimers.forEach(t => clearTimeout(t));
+      progressTimers = [];
+    }
+
     cameraInput.addEventListener('change', (e) => {
       if (e.target.files.length) handleFile(e.target.files[0]);
     });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
     const retakeCard = document.getElementById("retakeCard");
     const retakePhotoBtn = document.getElementById("retakePhotoBtn");
     const retakeUploadBtn = document.getElementById("retakeUploadBtn");
@@ -695,9 +705,13 @@
     const speakRetakeBtn = document.getElementById("speakRetakeBtn");
 
     retakePhotoBtn.addEventListener("click", () => {
+      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e) {}
+      cameraInput.value = "";
       cameraInput.click();
     });
     retakeUploadBtn.addEventListener("click", () => {
+      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch(e) {}
+      fileInput.value = "";
       fileInput.click();
     });
     speakRetakeBtn.addEventListener("click", () => {
@@ -705,6 +719,7 @@
     });
 
     function resetToUpload() {
+      clearProgressTimers();
       uploadCard.style.display = "block";
       progressCard.style.display = "none";
       retakeCard.style.display = "none";
@@ -714,6 +729,7 @@
     }
 
     function renderRetakeCard(data) {
+      clearProgressTimers();
       progressCard.style.display = "none";
       uploadCard.style.display = "none";
       resultsView.style.display = "none";
@@ -754,30 +770,79 @@
       speakGuidance(currentVoiceText);
     }
 
+    // Client-side image optimization: fast downscale high-res mobile photos to prevent upload lag
+    async function prepareImageFile(file) {
+      if (!file || file.size <= 1.5 * 1024 * 1024) {
+        return file;
+      }
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const maxDim = 1600;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob((blob) => {
+            if (blob && blob.size < file.size) {
+              resolve(new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: "image/jpeg" }));
+            } else {
+              resolve(file);
+            }
+          }, "image/jpeg", 0.88);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(file);
+        };
+        img.src = url;
+      });
+    }
+
     async function handleFile(file) {
       if (!file.type.startsWith('image/')) {
         alert("Please select a valid image file (JPEG, PNG, WebP).");
         return;
       }
 
-      // 1. Switch to progress view
+      // 1. Switch to progress view immediately
       uploadCard.style.display = "none";
       retakeCard.style.display = "none";
       resultsView.style.display = "none";
       progressCard.style.display = "block";
 
-      // Animate progress steps
+      // Animate progress steps cleanly
+      clearProgressTimers();
       setStepActive("stepQuality");
-      setTimeout(() => setStepCompleted("stepQuality", "stepDetect"), 400);
-      setTimeout(() => setStepCompleted("stepDetect", "stepIdentify"), 1200);
-      setTimeout(() => setStepCompleted("stepIdentify", "stepLighting"), 1800);
-      setTimeout(() => setStepCompleted("stepLighting", "stepFormat"), 2300);
-
-      // 2. Prepare payload - REQUIRES ONLY IMAGE
-      const formData = new FormData();
-      formData.append("image", file);
+      progressTimers.push(setTimeout(() => setStepCompleted("stepQuality", "stepDetect"), 400));
+      progressTimers.push(setTimeout(() => setStepCompleted("stepDetect", "stepIdentify"), 1200));
+      progressTimers.push(setTimeout(() => setStepCompleted("stepIdentify", "stepLighting"), 1800));
+      progressTimers.push(setTimeout(() => setStepCompleted("stepLighting", "stepFormat"), 2300));
 
       try {
+        // Fast client-side image compression for large mobile photos
+        const optimizedFile = await prepareImageFile(file);
+
+        // 2. Prepare payload - REQUIRES ONLY IMAGE
+        const formData = new FormData();
+        formData.append("image", optimizedFile);
+
         const response = await fetch(`${BACKEND_URL}/api/v1/process-image`, {
           method: "POST",
           body: formData
@@ -796,6 +861,7 @@
           return;
         }
 
+        clearProgressTimers();
         renderResults(data);
 
       } catch (err) {
