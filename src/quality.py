@@ -227,20 +227,55 @@ class ImageQualityAnalyzer:
         h, w = bgr_img.shape[:2]
         total_area = float(h * w)
 
-        gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, kernel)
-        _, thresh = cv2.threshold(gradient, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # Check if corners indicate a solid studio backdrop
+        corners = [
+            bgr_img[5, 5],
+            bgr_img[5, w - 6],
+            bgr_img[h - 6, 5],
+            bgr_img[h - 6, w - 6],
+        ]
+        corner_std = float(np.std(corners, axis=0).mean())
 
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if contours:
-            largest_contour = max(contours, key=cv2.contourArea)
-            bx, by, bw, bh = cv2.boundingRect(largest_contour)
-            product_area = float(bw * bh)
-            occupancy_ratio = float(product_area / total_area)
+        if corner_std < 12.0:
+            # Studio backdrop: detect product via distance from corner background color
+            bg_color = np.median(corners, axis=0)
+            diff = np.linalg.norm(bgr_img.astype(np.float32) - bg_color, axis=2)
+            fg_studio = (diff > 14.0).astype(np.uint8) * 255
+            contours, _ = cv2.findContours(fg_studio, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            valid_c = [c for c in contours if cv2.contourArea(c) > 300] if contours else []
+
+            if valid_c:
+                min_x, min_y = w, h
+                max_x, max_y = 0, 0
+                for c in valid_c:
+                    x, y, cw, ch = cv2.boundingRect(c)
+                    min_x = min(min_x, x)
+                    min_y = min(min_y, y)
+                    max_x = max(max_x, x + cw)
+                    max_y = max(max_y, y + ch)
+                bx, by, bw, bh = min_x, min_y, max(1, max_x - min_x), max(1, max_y - min_y)
+                product_area = float(bw * bh)
+                occupancy_ratio = float(product_area / total_area)
+            else:
+                occupancy_ratio = 0.55
+                bx, by, bw, bh = int(w * 0.1), int(h * 0.1), int(w * 0.8), int(h * 0.8)
         else:
-            occupancy_ratio = 0.5
-            bx, by, bw, bh = int(w * 0.1), int(h * 0.1), int(w * 0.8), int(h * 0.8)
+            # Cluttered scene: use morphological gradient
+            gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+            gradient = cv2.morphologyEx(gray, cv2.MORPH_GRADIENT, kernel)
+            _, thresh = cv2.threshold(gradient, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if contours:
+                largest_contour = max(contours, key=cv2.contourArea)
+                bx, by, bw, bh = cv2.boundingRect(largest_contour)
+                product_area = float(bw * bh)
+                occupancy_ratio = float(product_area / total_area)
+            else:
+                occupancy_ratio = 0.50
+                bx, by, bw, bh = int(w * 0.1), int(h * 0.1), int(w * 0.8), int(h * 0.8)
+
 
         if occupancy_ratio < cls.COMPOSITION_MIN_RATIO:
             status = "too_small"

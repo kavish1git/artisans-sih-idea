@@ -100,17 +100,18 @@ async def check_quality_only(image: UploadFile = File(...)):
 async def process_image_endpoint(
     request: Request,
     image: UploadFile = File(..., description="Raw smartphone handicraft photo"),
-    background: str = Form("white", description="Background type: white, off-white, light-gray, transparent"),
-    aspect_ratio: str = Form("1:1", description="Target aspect ratio: 1:1, 4:5, 3:4, 16:9"),
-    enhancement: str = Form("auto", description="Enhancement mode: auto, low, medium, none"),
-    shadow_mode: str = Form("professional", description="Shadow style: professional, natural, none"),
-    model_name: str = Form("isnet-general-use", description="Model: isnet-general-use, silueta, u2netp, u2net"),
-    alpha_matting: bool = Form(True, description="Enable edge and thread matting"),
-    detection_mode: str = Form("auto", description="Detection mode: auto, focused, full_set"),
+    background: str = Form("auto", description="Automatic contrast-aware background selection"),
+    aspect_ratio: str = Form("auto", description="Automatic e-commerce aspect ratio alignment"),
+    enhancement: str = Form("auto", description="Conservative photo-realistic enhancement"),
+    shadow_mode: str = Form("auto", description="Intelligent grounding shadow decision"),
+    model_name: str = Form("auto", description="Automatic segmentation model selection"),
 ):
     """
-    Main cataloging transformation pipeline endpoint.
-    Accepts multipart form-data and returns comprehensive product metadata and processed asset URLs.
+    Main fully automatic cataloging transformation pipeline endpoint.
+    Accepts ONLY the raw artisan image and automatically determines:
+    - Handicraft category & craft identity
+    - Visual attributes (color names, shape, orientation, pattern, texture)
+    - Optimal contrast background, grounding shadow, and framing.
     """
     # 1. Enforce payload size limit
     content = await image.read()
@@ -136,51 +137,77 @@ async def process_image_endpoint(
             enhancement=enhancement,
             shadow_mode=shadow_mode,
             target_dim=1080,
-            output_format="JPEG" if background != "transparent" else "PNG",
+            output_format="JPEG",
             model_name=model_name,
-            alpha_matting=alpha_matting,
-            detection_mode=detection_mode,
             save_files=True,
         )
 
         base_url = str(request.base_url).rstrip("/")
 
+        # Handle retake recommendations gracefully
+        if result.get("status") == "needs_retake":
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "status": "needs_retake",
+                    "reason": result.get("reason", "The product could not be isolated clearly."),
+                    "voice_prompt": result.get("voice_prompt", "Please place the craft on a contrasting surface and retake."),
+                    "quality_score": result.get("quality_score", 0),
+                    "processing": {"time_ms": result.get("processing_time_ms", 0)},
+                },
+            )
+
         # Convert local disk paths to accessible API URLs
         output_url = None
         transparent_url = None
+        orig_url = None
 
-        if result.get("output_image"):
-            out_name = Path(result["output_image"]).name
+        img_dict = result.get("image", {})
+        if img_dict.get("processed"):
+            out_name = Path(img_dict["processed"]).name
             output_url = f"{base_url}/output/{out_name}"
 
-        if result.get("transparent_image"):
-            trans_name = Path(result["transparent_image"]).name
+        if img_dict.get("transparent"):
+            trans_name = Path(img_dict["transparent"]).name
             transparent_url = f"{base_url}/output/{trans_name}"
 
+        if img_dict.get("original"):
+            orig_name = Path(img_dict["original"]).name
+            orig_url = f"{base_url}/output/{orig_name}"
+
         response_payload = {
-            "status": result["status"],
-            "image_url": output_url,
-            "output_image": result.get("output_image"),
-            "transparent_url": transparent_url,
-            "transparent_image": result.get("transparent_image"),
-            "before_score": result.get("before_score", 0),
-            "after_score": result.get("after_score", 0),
-            "improvement": result.get("improvement", 0),
-            "quality_before": result.get("quality_before", {}),
-            "quality_after": result.get("quality_after", {}),
-            "bounding_box": result.get("bounding_box", {}),
-            "dominant_colors": result.get("dominant_colors", []),
-            "recommendation": result.get("recommendation", ""),
-            "processing_time_ms": result.get("processing_time_ms", 0),
-            "aspect_ratio": result.get("aspect_ratio", aspect_ratio),
-            "background": result.get("background", background),
+            "status": "success",
+            "product": result.get("product", {}),
+            "visual_attributes": result.get("visual_attributes", {}),
+            "geometry": result.get("geometry", {}),
+            "image": {
+                "original": orig_url,
+                "processed": output_url,
+                "transparent": transparent_url,
+                "width": 1080,
+                "height": 1080,
+            },
+            "quality": result.get("quality", {}),
+            "processing": result.get("processing", {}),
+            "voice_prompt": result.get("voice_prompt", ""),
             "warnings": result.get("warnings", []),
+            # Compatibility helpers for existing UI / client scripts
+            "image_url": output_url,
+            "transparent_url": transparent_url,
+            "before_score": result.get("quality", {}).get("before", 0),
+            "after_score": result.get("quality", {}).get("after", 0),
+            "improvement": result.get("quality", {}).get("improvement", 0),
+            "dominant_colors": result.get("visual_attributes", {}).get("palette_hex", []),
+            "recommendation": result.get("voice_prompt", ""),
+            "processing_time_ms": result.get("processing", {}).get("time_ms", 0),
         }
 
         return JSONResponse(content=response_payload)
+
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Pipeline processing failure: {str(e)}",
         )
+

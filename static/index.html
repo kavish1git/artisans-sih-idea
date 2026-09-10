@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Cataloging CV Engine | SIH26090</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #4F46E5;
@@ -25,13 +25,13 @@
       background: var(--bg);
       color: var(--text-main);
       line-height: 1.5;
-      padding-bottom: 40px;
+      padding-bottom: 50px;
     }
 
     header {
       background: #FFFFFF;
       border-bottom: 1px solid var(--border);
-      padding: 18px 32px;
+      padding: 16px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -44,165 +44,276 @@
       align-items: center;
       gap: 12px;
     }
+    .brand-icon {
+      font-size: 1.6rem;
+      background: #EEF2FF;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
     .badge {
       background: #EEF2FF;
       color: var(--primary);
       font-weight: 600;
       font-size: 0.8rem;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 9999px;
       border: 1px solid #C7D2FE;
     }
     .badge-success { background: #ECFDF5; color: var(--success); border-color: #A7F3D0; }
 
     .container {
-      max-width: 1280px;
-      margin: 32px auto;
-      padding: 0 24px;
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 32px;
-    }
-
-    @media (max-width: 1024px) {
-      .container { grid-template-columns: 1fr; }
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 0 20px;
     }
 
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      margin-bottom: 24px;
     }
 
-    /* Upload Zone */
-    .drop-zone {
-      border: 2px dashed #CBD5E1;
-      border-radius: 12px;
-      padding: 28px 16px;
+    /* Upload & Camera Buttons */
+    .hero-upload {
       text-align: center;
+      padding: 40px 20px;
+      border: 2px dashed #CBD5E1;
+      border-radius: 18px;
+      background: #FAFBFD;
+      transition: all 0.2s ease;
       cursor: pointer;
-      background: #F8FAFC;
-      transition: all 0.2s;
     }
-    .drop-zone:hover, .drop-zone.dragover {
+    .hero-upload:hover, .hero-upload.dragover {
       border-color: var(--primary);
       background: #F5F3FF;
     }
-    .drop-zone svg {
-      width: 44px;
-      height: 44px;
-      fill: var(--text-muted);
-      margin-bottom: 8px;
+    .camera-icon-wrap {
+      width: 80px;
+      height: 80px;
+      background: #EEF2FF;
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      font-size: 2.2rem;
     }
 
-    /* Controls */
-    .form-group {
-      margin-top: 18px;
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 24px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
     }
-    .form-label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      display: block;
-    }
-    select, input[type="text"] {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #FFFFFF;
-      font-family: inherit;
-      font-size: 0.9rem;
-      color: var(--text-main);
+    @media (max-width: 540px) {
+      .action-buttons { grid-template-columns: 1fr; }
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
       border: none;
       cursor: pointer;
       transition: all 0.2s;
-      margin-top: 22px;
+      text-decoration: none;
     }
     .btn-primary {
       background: var(--primary);
       color: white;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
     }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    /* Results Dashboard */
-    .metrics-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    .metric-card {
-      background: #F8FAFC;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-    }
-    .metric-val {
-      font-size: 1.6rem;
-      font-weight: 700;
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-secondary {
+      background: #F1F5F9;
       color: var(--text-main);
     }
-    .metric-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
+    .btn-secondary:hover { background: #E2E8F0; }
+    .btn-success {
+      background: var(--success);
+      color: white;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    }
+    .btn-success:hover { background: #059669; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+    }
+    .btn-outline:hover { background: #F8FAFC; }
+
+    /* Live Progress Checklist */
+    .progress-box {
+      display: none;
+      padding: 24px;
+    }
+    .checklist {
+      list-style: none;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
       font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .checklist-item.active {
+      color: var(--primary);
+    }
+    .checklist-item.completed {
+      color: var(--success);
+    }
+    .check-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      background: #E2E8F0;
+      color: white;
+    }
+    .checklist-item.active .check-icon {
+      background: var(--primary);
+      animation: pulse 1.5s infinite;
+    }
+    .checklist-item.completed .check-icon {
+      background: var(--success);
     }
 
-    /* Voice prompt banner */
-    .artisan-banner {
-      background: #EFF6FF;
-      border: 1px solid #BFDBFE;
-      border-radius: 12px;
-      padding: 16px;
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    /* Spoken Guidance Banner */
+    .voice-banner {
+      background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+      border: 1px solid #C7D2FE;
+      border-radius: 16px;
+      padding: 18px 22px;
       margin-bottom: 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
     }
-    .artisan-text {
-      font-size: 0.95rem;
-      color: #1E40AF;
-      font-weight: 500;
+    .voice-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
     }
-    .btn-voice {
-      width: auto;
-      margin: 0;
-      padding: 8px 14px;
-      background: #2563EB;
-      color: white;
-      font-size: 0.85rem;
-      border-radius: 8px;
+    .voice-avatar {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+    .voice-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--primary);
+      letter-spacing: 0.05em;
+    }
+    .voice-text {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1E1B4B;
+      margin-top: 2px;
     }
 
-    /* Image Comparison Display */
+    /* Product Identity Card */
+    .product-hero {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .product-title-group h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .product-category-tag {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: #EEF2FF;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+    .confidence-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 6px 14px;
+      border-radius: 9999px;
+    }
+
+    /* Attributes Chips */
+    .chips-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .chip {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.15);
+      display: inline-block;
+    }
+
+    /* Before / After Comparison */
     .view-tabs {
       display: flex;
       gap: 8px;
@@ -213,12 +324,13 @@
     .tab-btn {
       background: none;
       border: none;
-      padding: 6px 14px;
+      padding: 8px 16px;
       font-size: 0.9rem;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 8px;
+      transition: all 0.2s;
     }
     .tab-btn.active {
       background: #EEF2FF;
@@ -230,9 +342,13 @@
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
+    @media (max-width: 680px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
     .image-frame {
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       background: #FAFAFA;
       text-align: center;
@@ -246,57 +362,66 @@
     }
     .image-tag {
       position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(15, 23, 42, 0.75);
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.82);
       color: white;
-      padding: 4px 10px;
+      padding: 5px 12px;
       font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 6px;
+      font-weight: 700;
+      border-radius: 8px;
       backdrop-filter: blur(4px);
     }
 
     .checkerboard {
-      background-image: linear-gradient(45deg, #eee 25%, transparent 25%),
-                        linear-gradient(-45deg, #eee 25%, transparent 25%),
-                        linear-gradient(45deg, transparent 75%, #eee 75%),
-                        linear-gradient(-45deg, transparent 75%, #eee 75%);
+      background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
       background-size: 16px 16px;
       background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     }
 
-    /* Colors */
-    .color-swatches {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 16px;
+    /* Quality Metrics */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
-    .swatch {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2px solid white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    .metric-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .metric-val {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
     }
 
-    /* Progress bar */
-    .progress-wrap {
-      display: none;
-      margin-top: 16px;
+    /* Final Action Footer */
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
     }
-    .progress-bar {
-      height: 8px;
-      background: #E2E8F0;
-      border-radius: 9999px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--primary);
-      transition: width 0.3s;
+    @media (max-width: 540px) {
+      .footer-actions { flex-direction: column-reverse; }
+      .footer-actions .btn { width: 100%; }
     }
   </style>
 </head>
@@ -304,365 +429,415 @@
 
   <header>
     <div class="brand">
-      <div style="font-size: 1.4rem;">🏺</div>
+      <div class="brand-icon">🏺</div>
       <div>
-        <h1 style="font-size: 1.15rem; font-weight: 700;">Artisan Smart Cataloging</h1>
-        <p style="font-size: 0.8rem; color: var(--text-muted);">SIH26090 • Computer Vision Engine</p>
+        <h1 style="font-size: 1.15rem; font-weight: 800;">Artisan Smart Cataloging</h1>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">SIH26090 • AI Computer Vision Pipeline</p>
       </div>
     </div>
-    <div style="display: flex; gap: 8px; align-items: center;">
-      <span class="badge badge-success">✓ Pipeline Active</span>
-      <span class="badge">U²-Net + CPU Optimized</span>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <span class="badge badge-success">● AI Engine Ready</span>
       <button class="badge" onclick="configureBackendUrl()" style="cursor: pointer; background: #FFF; border: 1px solid #CBD5E1;">⚙️ API Server</button>
     </div>
   </header>
 
   <main class="container">
-    <!-- Left Column: Controls & Input -->
-    <section>
-      <div class="card">
-        <h2 class="card-title">Upload Handicraft Photo</h2>
-        
-        <div class="drop-zone" id="dropZone">
-          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-          <p style="font-weight: 600; font-size: 0.95rem;">Drag & drop artisan photograph</p>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports JPEG, PNG, WebP up to 15MB</p>
-          <input type="file" id="fileInput" accept="image/*" style="display: none;">
-        </div>
 
-        <div class="form-group">
-          <label class="form-label">Marketplace Background</label>
-          <select id="bgSelect">
-            <option value="white">Pure White (#FFFFFF) - Amazon/Flipkart Compliant</option>
-            <option value="off-white">Off-White (#F8F9FA) - Soft E-Commerce</option>
-            <option value="light-gray">Light Gray (#F0F0F2) - Minimal Studio</option>
-            <option value="transparent">Transparent (PNG Cutout)</option>
-          </select>
-        </div>
+    <!-- Screen 1: Simple Artisan Upload & Camera Trigger -->
+    <div class="card" id="uploadCard">
+      <div class="hero-upload" id="dropZone">
+        <div class="camera-icon-wrap">📷</div>
+        <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 6px;">Photograph Your Handicraft</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 440px; margin: 0 auto;">
+          Take a smartphone photo on any surface. The AI will automatically clean, identify, and catalog your craft.
+        </p>
 
-        <div class="form-group">
-          <label class="form-label">Catalog Aspect Ratio</label>
-          <select id="ratioSelect">
-            <option value="1:1" selected>1:1 Square (1080 x 1080) - Standard</option>
-            <option value="4:5">4:5 Vertical - Social & Mobile Feed</option>
-            <option value="3:4">3:4 Portrait - Traditional Listing</option>
-            <option value="16:9">16:9 Landscape - Banner</option>
-          </select>
-        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
 
-        <div class="form-group">
-          <label class="form-label">Grounding Shadow Mode</label>
-          <select id="shadowSelect">
-            <option value="professional" selected>Professional (Subtle Grounding Contact Shadow)</option>
-            <option value="natural">Natural (Soft Ambient Occlusion)</option>
-            <option value="none">None (Flat Cutout)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">AI Segmentation Engine</label>
-          <select id="modelSelect">
-            <option value="isnet-general-use" selected>IS-Net Ultra-Detail (Jewelry, Threads & Intricate Crafts) - Recommended</option>
-            <option value="silueta">Silueta High-Accuracy (Clean Boundary & Fast)</option>
-            <option value="u2netp">U²-Net Portable (Fast / Low Memory)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Detection Scope</label>
-          <select id="detectionModeSelect">
-            <option value="auto" selected>Auto (Smart Craft Clustering) - Recommended</option>
-            <option value="focused">Single Item Focus (Isolates primary craft, removes stands & clutter)</option>
-            <option value="full_set">Full Display / Multi-Piece Set (Preserves stand, rack & all pieces)</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
-          <input type="checkbox" id="mattingCheck" checked style="width: auto; cursor: pointer;">
-          <label for="mattingCheck" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); cursor: pointer;">
-            Fine-Edge Matting (Preserves wires, embroidery, threads)
-          </label>
-        </div>
-
-        <button class="btn btn-primary" id="processBtn" disabled>
-          <span>🚀 Process Product Image</span>
-        </button>
-
-        <div class="progress-wrap" id="progressWrap">
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;" id="progressText">Executing pipeline...</p>
-          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="document.getElementById('cameraInput').click()">
+            <span>📷 Take Photo</span>
+          </button>
+          <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+            <span>📁 Upload File</span>
+          </button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Right Column: Visual Inspection & Metrics -->
-    <section>
-      <!-- Voice feedback banner -->
-      <div class="artisan-banner" id="voiceBanner" style="display: none;">
-        <div>
-          <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #2563EB;">Artisan Spoken Guidance (Voice Prompt):</span>
-          <p class="artisan-text" id="voiceText">Product detected clearly! Photo quality is great for cataloging.</p>
-        </div>
-        <button class="btn btn-voice" id="speakBtn">🔊 Read Aloud</button>
-      </div>
+    <!-- Screen 2: Automatic Processing & Live Checklist -->
+    <div class="card progress-box" id="progressCard">
+      <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">AI is preparing your product...</h3>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Analyzing photograph and optimizing for marketplace listing.</p>
 
-      <!-- Metrics Row -->
-      <div class="metrics-bar" id="metricsBar" style="display: none;">
-        <div class="metric-card">
-          <div class="metric-val" id="beforeScore">--</div>
-          <div class="metric-label">Input Quality</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val" style="color: var(--success);" id="afterScore">--</div>
-          <div class="metric-label">Catalog Quality</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val" style="color: var(--primary);" id="improvementVal">--</div>
-          <div class="metric-label">Quality Boost</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-val" id="procTime">--</div>
-          <div class="metric-label">Inference Time</div>
-        </div>
-      </div>
+      <ul class="checklist">
+        <li class="checklist-item active" id="stepQuality">
+          <span class="check-icon">1</span>
+          <span>Analyzing photo quality and exposure...</span>
+        </li>
+        <li class="checklist-item" id="stepDetect">
+          <span class="check-icon">2</span>
+          <span>Detecting primary craft and removing background...</span>
+        </li>
+        <li class="checklist-item" id="stepIdentify">
+          <span class="check-icon">3</span>
+          <span>Identifying Indian handicraft category...</span>
+        </li>
+        <li class="checklist-item" id="stepLighting">
+          <span class="check-icon">4</span>
+          <span>Balancing lighting, true colors & grounding shadow...</span>
+        </li>
+        <li class="checklist-item" id="stepFormat">
+          <span class="check-icon">5</span>
+          <span>Generating 1080×1080 marketplace image...</span>
+        </li>
+      </ul>
+    </div>
 
-      <!-- Image Display Cards -->
-      <div class="card">
-        <div class="view-tabs">
-          <button class="tab-btn active" onclick="switchView('split')">Side-by-Side Comparison</button>
-          <button class="tab-btn" onclick="switchView('transparent')">Transparent Cutout</button>
-          <button class="tab-btn" onclick="switchView('final')">1080x1080 Final Output</button>
-        </div>
+    <!-- Screen 3: Results Display (Product Profile + Comparison) -->
+    <div id="resultsView" style="display: none;">
 
-        <div id="splitView" class="comparison-grid">
-          <div class="image-frame">
-            <span class="image-tag">Original Smartphone Photo</span>
-            <img id="origPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ctext y='50' font-size='12'%3ENo image selected%3C/text%3E%3C/svg%3E" alt="Original">
-          </div>
-          <div class="image-frame">
-            <span class="image-tag">Marketplace Ready (1080×1080)</span>
-            <img id="resultPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ctext y='50' font-size='12'%3EAwaiting processing%3C/text%3E%3C/svg%3E" alt="Marketplace Output">
-          </div>
-        </div>
-
-        <div id="transparentView" style="display: none;">
-          <div class="image-frame checkerboard">
-            <span class="image-tag">Alpha Matting Cutout</span>
-            <img id="transPreview" src="" alt="Transparent PNG">
-          </div>
-        </div>
-
-        <div id="finalView" style="display: none;">
-          <div class="image-frame">
-            <span class="image-tag">1080x1080 Marketplace Standard</span>
-            <img id="singleFinalPreview" src="" alt="Final Output">
-          </div>
-        </div>
-
-        <!-- Dominant Colors & Action -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+      <!-- Spoken Artisan Guidance -->
+      <div class="voice-banner">
+        <div class="voice-content">
+          <div class="voice-avatar">🗣️</div>
           <div>
-            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Extracted Dominant Colors:</span>
-            <div class="color-swatches" id="colorSwatches">
-              <span style="font-size: 0.85rem; color: var(--text-muted);">Upload an image to extract</span>
-            </div>
+            <div class="voice-title">Spoken Guidance for Artisan</div>
+            <p class="voice-text" id="voiceText">Product detected clearly! Image prepared for cataloging.</p>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <a id="downloadBtn" class="btn btn-primary" style="width: auto; margin: 0; padding: 10px 20px; display: none;" download="catalog_product.jpg">
-              ⬇ Download 1080x1080 Catalog Image
+        </div>
+        <button class="btn btn-primary" id="speakBtn" style="padding: 10px 18px; font-size: 0.9rem;">
+          🔊 Listen
+        </button>
+      </div>
+
+      <!-- Detected Product Profile Card -->
+      <div class="card" style="padding: 22px;">
+        <div class="product-hero">
+          <div class="product-title-group">
+            <h2 id="productName">Terracotta Pottery</h2>
+            <span class="product-category-tag" id="productCategory">Category: Pottery</span>
+          </div>
+          <div class="confidence-badge" id="confidenceBadge">
+            ✓ 96% Confidence
+          </div>
+        </div>
+
+        <!-- Real Visual Attributes -->
+        <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; margin-bottom: 12px; letter-spacing: 0.05em;">
+          Visual Attributes Identified:
+        </h4>
+        <div class="chips-group" id="attributesGroup">
+          <!-- Dynamically filled -->
+        </div>
+
+        <!-- Before / After Quality Row -->
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-val" id="beforeScore">--</div>
+            <div class="metric-label">Input Quality</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val" style="color: var(--success);" id="afterScore">--</div>
+            <div class="metric-label">Catalog Quality</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val" style="color: var(--primary);" id="improvementVal">+0</div>
+            <div class="metric-label">Improvement</div>
+          </div>
+        </div>
+
+        <!-- Image Comparison Section -->
+        <div class="view-tabs">
+          <button class="tab-btn active" onclick="switchView('sideBySide')">Side-by-Side Comparison</button>
+          <button class="tab-btn" onclick="switchView('catalogOnly')">Clean Marketplace (1080×1080)</button>
+          <button class="tab-btn" onclick="switchView('transparentOnly')">Transparent PNG</button>
+        </div>
+
+        <div id="viewSideBySide" class="comparison-grid">
+          <div class="image-frame">
+            <span class="image-tag">BEFORE • Smartphone Photo</span>
+            <img id="origImg" src="" alt="Original Photo">
+          </div>
+          <div class="image-frame">
+            <span class="image-tag" style="background: rgba(16, 185, 129, 0.9);">AFTER • AI Catalog Ready</span>
+            <img id="processedImg" src="" alt="Catalog Image">
+          </div>
+        </div>
+
+        <div id="viewCatalogOnly" style="display: none;">
+          <div class="image-frame">
+            <span class="image-tag" style="background: rgba(16, 185, 129, 0.9);">1080×1080 Clean Marketplace Listing</span>
+            <img id="catalogFullImg" src="" alt="Catalog View" style="height: 480px;">
+          </div>
+        </div>
+
+        <div id="viewTransparentOnly" style="display: none;">
+          <div class="image-frame checkerboard">
+            <span class="image-tag">Transparent Cutout</span>
+            <img id="transparentFullImg" src="" alt="Transparent Cutout" style="height: 480px;">
+          </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="footer-actions">
+          <button class="btn btn-outline" onclick="resetToUpload()">
+            <span>🔄 Retake / Upload Another</span>
+          </button>
+          <div style="display: flex; gap: 12px;">
+            <a class="btn btn-secondary" id="downloadTransBtn" download="craft_transparent.png" href="#">
+              <span>📥 Download Cutout</span>
+            </a>
+            <a class="btn btn-success" id="downloadCatalogBtn" download="craft_catalog.jpg" href="#">
+              <span>✅ Looks Good (Download)</span>
             </a>
           </div>
         </div>
+
       </div>
-    </section>
+    </div>
+
   </main>
 
   <script>
-    let selectedFile = null;
-    let latestResult = null;
-
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const processBtn = document.getElementById('processBtn');
-    const origPreview = document.getElementById('origPreview');
-    const resultPreview = document.getElementById('resultPreview');
-    const transPreview = document.getElementById('transPreview');
-    const singleFinalPreview = document.getElementById('singleFinalPreview');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleFile(e.target.files[0]);
-
-    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-    dropZone.ondrop = (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-    };
-
-    function handleFile(file) {
-      if (!file || !file.type.startsWith('image/')) return;
-      selectedFile = file;
-      processBtn.disabled = false;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        origPreview.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-
-      // Pre-flight quality check
-      runPreflightQuality(file);
-    }
-
-    function getApiUrl(endpoint) {
-      const custom = localStorage.getItem('artisan_cv_api_url');
-      if (custom && custom.trim()) {
-        return custom.trim().replace(/\/$/, '') + endpoint;
-      }
-      return endpoint;
-    }
+    // Configurable API backend URL (defaults to origin or saved custom URL)
+    let BACKEND_URL = localStorage.getItem("artisan_backend_url") || window.location.origin;
 
     function configureBackendUrl() {
-      const current = localStorage.getItem('artisan_cv_api_url') || window.location.origin;
-      const val = prompt("Enter the backend API server URL (e.g. https://your-backend.onrender.com or http://localhost:8000):", current);
-      if (val !== null) {
-        localStorage.setItem('artisan_cv_api_url', val.trim());
-        alert("API endpoint updated to: " + (val.trim() || window.location.origin));
+      const current = BACKEND_URL;
+      const input = prompt("Enter your Computer Vision Backend URL (e.g. https://your-app.hf.space or http://localhost:8000):", current);
+      if (input !== null && input.trim() !== "") {
+        BACKEND_URL = input.trim().replace(/\/+$/, "");
+        localStorage.setItem("artisan_backend_url", BACKEND_URL);
+        alert("API Server configured to: " + BACKEND_URL);
       }
     }
 
-    async function runPreflightQuality(file) {
-      const formData = new FormData();
-      formData.append('image', file);
-      try {
-        const res = await fetch(getApiUrl('/api/v1/quality'), { method: 'POST', body: formData });
-        if (res.ok) {
-          const data = await res.json();
-          showVoiceBanner(data.recommendation);
-          document.getElementById('beforeScore').innerText = `${data.overall_score}/100`;
-          document.getElementById('metricsBar').style.display = 'grid';
-        }
-      } catch (err) {
-        console.warn("Pre-flight check error:", err);
-      }
+    const dropZone = document.getElementById("dropZone");
+    const cameraInput = document.getElementById("cameraInput");
+    const fileInput = document.getElementById("fileInput");
+
+    const uploadCard = document.getElementById("uploadCard");
+    const progressCard = document.getElementById("progressCard");
+    const resultsView = document.getElementById("resultsView");
+
+    let currentVoiceText = "";
+
+    // Drag & Drop
+    ['dragenter', 'dragover'].forEach(name => {
+      dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+
+    cameraInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function resetToUpload() {
+      uploadCard.style.display = "block";
+      progressCard.style.display = "none";
+      resultsView.style.display = "none";
+      cameraInput.value = "";
+      fileInput.value = "";
     }
 
-    processBtn.onclick = async () => {
-      if (!selectedFile) return;
+    async function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert("Please select a valid image file (JPEG, PNG, WebP).");
+        return;
+      }
 
-      processBtn.disabled = true;
-      const progressWrap = document.getElementById('progressWrap');
-      const progressFill = document.getElementById('progressFill');
-      const progressText = document.getElementById('progressText');
+      // 1. Switch to progress view
+      uploadCard.style.display = "none";
+      resultsView.style.display = "none";
+      progressCard.style.display = "block";
 
-      progressWrap.style.display = 'block';
-      progressFill.style.width = '20%';
-      progressText.innerText = 'Analyzing image & segmenting product...';
+      // Animate progress steps
+      setStepActive("stepQuality");
+      setTimeout(() => setStepCompleted("stepQuality", "stepDetect"), 400);
+      setTimeout(() => setStepCompleted("stepDetect", "stepIdentify"), 1200);
+      setTimeout(() => setStepCompleted("stepIdentify", "stepLighting"), 1800);
+      setTimeout(() => setStepCompleted("stepLighting", "stepFormat"), 2300);
 
+      // 2. Prepare payload - REQUIRES ONLY IMAGE
       const formData = new FormData();
-      formData.append('image', selectedFile);
-      formData.append('background', document.getElementById('bgSelect').value);
-      formData.append('aspect_ratio', document.getElementById('ratioSelect').value);
-      formData.append('shadow_mode', document.getElementById('shadowSelect').value);
-      formData.append('model_name', document.getElementById('modelSelect').value);
-      formData.append('detection_mode', document.getElementById('detectionModeSelect').value);
-      formData.append('alpha_matting', document.getElementById('mattingCheck').checked);
-      formData.append('enhancement', 'auto');
-
-      setTimeout(() => { progressFill.style.width = '65%'; progressText.innerText = 'Correcting lighting & generating clean backdrop...'; }, 600);
+      formData.append("image", file);
 
       try {
-        const response = await fetch(getApiUrl('/api/v1/process-image'), {
-          method: 'POST',
+        const response = await fetch(`${BACKEND_URL}/api/v1/process-image`, {
+          method: "POST",
           body: formData
         });
 
         if (!response.ok) {
-          const err = await response.json();
-          alert(`Processing error: ${err.detail || 'Failed to process image'}`);
-          progressWrap.style.display = 'none';
-          processBtn.disabled = false;
+          const err = await response.json().catch(() => ({ detail: "Failed to process photo" }));
+          throw new Error(err.detail || "Server error during processing");
+        }
+
+        const data = await response.json();
+
+        // Check if retake is recommended
+        if (data.status === "needs_retake") {
+          progressCard.style.display = "none";
+          uploadCard.style.display = "block";
+          alert(data.reason + "\n\nArtisan tip: " + data.voice_prompt);
+          speakGuidance(data.voice_prompt);
           return;
         }
 
-        progressFill.style.width = '100%';
-        progressText.innerText = 'Catalog image ready!';
+        renderResults(data);
 
-        const result = await response.json();
-        latestResult = result;
-
-        // Update Previews
-        resultPreview.src = result.image_url;
-        transPreview.src = result.transparent_url;
-        singleFinalPreview.src = result.image_url;
-
-        // Download button
-        downloadBtn.href = result.image_url;
-        downloadBtn.style.display = 'inline-flex';
-
-        // Update Metrics
-        document.getElementById('beforeScore').innerText = `${result.before_score}/100`;
-        document.getElementById('afterScore').innerText = `${result.after_score}/100`;
-        document.getElementById('improvementVal').innerText = `+${result.improvement}`;
-        document.getElementById('procTime').innerText = `${(result.processing_time_ms / 1000).toFixed(1)}s`;
-        document.getElementById('metricsBar').style.display = 'grid';
-
-        // Spoken recommendation
-        showVoiceBanner(result.recommendation);
-
-        // Dominant Colors
-        renderColors(result.dominant_colors);
-
-      } catch (e) {
-        alert("Failed to reach server: " + e.message);
-      } finally {
-        setTimeout(() => { progressWrap.style.display = 'none'; }, 1000);
-        processBtn.disabled = false;
+      } catch (err) {
+        alert("Error: " + err.message);
+        resetToUpload();
       }
-    };
-
-    function showVoiceBanner(text) {
-      const banner = document.getElementById('voiceBanner');
-      const voiceText = document.getElementById('voiceText');
-      voiceText.innerText = text;
-      banner.style.display = 'flex';
     }
 
-    document.getElementById('speakBtn').onclick = () => {
-      const text = document.getElementById('voiceText').innerText;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 0.95;
-        window.speechSynthesis.speak(utter);
-      } else {
-        alert("Text-to-speech not supported in this browser.");
-      }
-    };
+    function setStepActive(id) {
+      document.getElementById(id).className = "checklist-item active";
+    }
+    function setStepCompleted(currId, nextId) {
+      document.getElementById(currId).className = "checklist-item completed";
+      document.getElementById(currId).querySelector(".check-icon").textContent = "✓";
+      if (nextId) setStepActive(nextId);
+    }
 
-    function renderColors(colors) {
-      const container = document.getElementById('colorSwatches');
-      container.innerHTML = '';
-      if (!colors || !colors.length) return;
-      colors.forEach(hex => {
-        const sw = document.createElement('div');
-        sw.className = 'swatch';
-        sw.style.backgroundColor = hex;
-        sw.title = hex;
-        container.appendChild(sw);
+    function renderResults(data) {
+      progressCard.style.display = "none";
+      resultsView.style.display = "block";
+
+      // 1. Product Identity
+      const prod = data.product || {};
+      document.getElementById("productName").textContent = prod.name || "Handicraft Product";
+      document.getElementById("productCategory").textContent = `Category: ${prod.category || "Craft"}`;
+
+      const confPct = Math.round((prod.confidence || 0.85) * 100);
+      document.getElementById("confidenceBadge").textContent = `✓ ${confPct}% Confidence`;
+
+      // 2. Spoken Guidance
+      currentVoiceText = data.voice_prompt || `${prod.name || "Product"} detected. Ready for cataloging.`;
+      document.getElementById("voiceText").textContent = currentVoiceText;
+
+      // 3. Visual Attributes Chips
+      const attrs = data.visual_attributes || {};
+      const chipsGroup = document.getElementById("attributesGroup");
+      chipsGroup.innerHTML = "";
+
+      // Colors with palette swatches
+      const colors = attrs.colors || [];
+      const hexes = attrs.palette_hex || [];
+      colors.forEach((col, i) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        const dot = document.createElement("span");
+        dot.className = "color-dot";
+        dot.style.backgroundColor = hexes[i] || "#777";
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(col.charAt(0).toUpperCase() + col.slice(1)));
+        chipsGroup.appendChild(chip);
       });
+
+      // Shape
+      if (attrs.shape) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = `📐 Shape: ${attrs.shape}`;
+        chipsGroup.appendChild(chip);
+      }
+
+      // Orientation
+      if (attrs.orientation) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = `🧭 ${attrs.orientation.charAt(0).toUpperCase() + attrs.orientation.slice(1)}`;
+        chipsGroup.appendChild(chip);
+      }
+
+      // Pattern
+      if (attrs.pattern) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = `✨ ${attrs.pattern.charAt(0).toUpperCase() + attrs.pattern.slice(1)}`;
+        chipsGroup.appendChild(chip);
+      }
+
+      // Texture
+      if (attrs.texture) {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = `🧶 ${attrs.texture}`;
+        chipsGroup.appendChild(chip);
+      }
+
+      // 4. Quality Scores
+      const q = data.quality || {};
+      document.getElementById("beforeScore").textContent = q.before || data.before_score || "--";
+      document.getElementById("afterScore").textContent = q.after || data.after_score || "--";
+      const imp = (q.improvement !== undefined) ? q.improvement : (data.improvement || 0);
+      document.getElementById("improvementVal").textContent = `+${imp}`;
+
+      // 5. Images
+      const imgObj = data.image || {};
+      const origUrl = imgObj.original || "";
+      const processedUrl = imgObj.processed || data.image_url || "";
+      const transUrl = imgObj.transparent || data.transparent_url || "";
+
+      document.getElementById("origImg").src = origUrl;
+      document.getElementById("processedImg").src = processedUrl;
+      document.getElementById("catalogFullImg").src = processedUrl;
+      document.getElementById("transparentFullImg").src = transUrl;
+
+      document.getElementById("downloadCatalogBtn").href = processedUrl;
+      document.getElementById("downloadTransBtn").href = transUrl;
+
+      // Auto-read aloud recommendation for low-literacy artisans
+      speakGuidance(currentVoiceText);
     }
 
-    function switchView(view) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
+    function switchView(mode) {
+      const tabs = document.querySelectorAll(".tab-btn");
+      tabs.forEach(t => t.classList.remove("active"));
 
-      document.getElementById('splitView').style.display = view === 'split' ? 'grid' : 'none';
-      document.getElementById('transparentView').style.display = view === 'transparent' ? 'block' : 'none';
-      document.getElementById('finalView').style.display = view === 'final' ? 'block' : 'none';
+      document.getElementById("viewSideBySide").style.display = "none";
+      document.getElementById("viewCatalogOnly").style.display = "none";
+      document.getElementById("viewTransparentOnly").style.display = "none";
+
+      if (mode === 'sideBySide') {
+        tabs[0].classList.add("active");
+        document.getElementById("viewSideBySide").style.display = "grid";
+      } else if (mode === 'catalogOnly') {
+        tabs[1].classList.add("active");
+        document.getElementById("viewCatalogOnly").style.display = "block";
+      } else {
+        tabs[2].classList.add("active");
+        document.getElementById("viewTransparentOnly").style.display = "block";
+      }
     }
+
+    // Web Speech API for voice playback
+    function speakGuidance(text) {
+      if ('speechSynthesis' in window && text) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    document.getElementById("speakBtn").addEventListener("click", () => {
+      speakGuidance(currentVoiceText);
+    });
   </script>
 </body>
 </html>

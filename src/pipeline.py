@@ -1,16 +1,16 @@
-"""Complete Computer Vision Pipeline Orchestrator (Modules 11 & 12)
-Transforms poor smartphone photos into professional marketplace catalog images:
-1. Quality Analysis (Before)
-2. Product Segmentation (U2-Net / GrabCut fallback)
-3. Edge-Preserving Background Removal (Transparent PNG)
-4. Adaptive Lighting & Exposure Correction
-5. White Balance & Color Constancy
-6. Smart Bounding Box Centering & Aspect Ratio Alignment (1:1, 4:5, 3:4, 16:9)
-7. Grounding Shadow Synthesis (Professional vs. Natural)
-8. Clean Backdrop Generation (White, Off-White, Light Gray)
-9. Conservative Enhancement & Formatting (1080x1080 JPEG/WebP)
-10. Quality Verification (Before vs. After Comparison & Anomaly Safeguards)
-11. Dominant Color & Visual Metadata Extraction
+"""Complete Computer Vision Pipeline Orchestrator (Modules 11, 12, 17)
+Fully Automatic AI Pipeline for SIH26090:
+1. Image validation & pre-flight quality check
+2. Salient product segmentation with model cascade (IS-Net -> Silueta -> U2Net -> GrabCut)
+3. Quality verification & retake guardrails (prevents empty/failed cutouts)
+4. Indian handicraft product detection & taxonomy classification (non-hallucinating)
+5. Objective visual attributes extraction (colors, shape, orientation, pattern, texture)
+6. Adaptive lighting correction & Shades-of-Gray color constancy
+7. Proportional aspect ratio alignment & smart centering (1080x1080)
+8. Intelligent grounding shadow synthesis (3D contact vs natural ambient vs flat lay)
+9. Contrast-aware marketplace backdrop selection (prevents white-on-white edge bleed)
+10. Final catalog verification (before/after quality delta)
+11. Structured Product Profile generation matching SIH multi-agent contract.
 """
 
 import time
@@ -28,9 +28,11 @@ from src.background import BackgroundRemover
 from src.lighting import correct_lighting
 from src.white_balance import correct_white_balance
 from src.crop import crop_and_center_product
-from src.shadow import apply_grounding_shadow
-from src.marketplace import MarketplaceGenerator
+from src.shadow import apply_grounding_shadow, ShadowHandler
+from src.marketplace import MarketplaceGenerator, BACKGROUND_PALETTES
 from src.formatter import MarketplaceFormatter
+from src.detector import detect_product
+from src.attributes import extract_attributes
 
 
 class PipelineError(Exception):
@@ -39,7 +41,7 @@ class PipelineError(Exception):
 
 
 class ProductImagePipeline:
-    """Orchestrates end-to-end production computer vision pipeline."""
+    """Orchestrates fully automatic production computer vision pipeline."""
 
     def __init__(
         self,
@@ -51,50 +53,13 @@ class ProductImagePipeline:
         self.segmenter = ProductSegmenter(model_name=model_name)
         self.remover = BackgroundRemover(segmenter=self.segmenter)
 
-    @staticmethod
-    def extract_dominant_colors(rgba_img: Image.Image, k: int = 4) -> List[str]:
-        """
-        Extracts dominant product colors (hex codes) from non-transparent foreground pixels.
-        """
-        arr = np.array(rgba_img)
-        if arr.shape[2] != 4:
-            return ["#808080"]
-
-        alpha = arr[:, :, 3]
-        rgb = arr[:, :, :3]
-        fg_pixels = rgb[alpha > 80]
-
-        if len(fg_pixels) < 20:
-            return ["#808080"]
-
-        # Subsample for speed
-        if len(fg_pixels) > 5000:
-            indices = np.random.choice(len(fg_pixels), 5000, replace=False)
-            samples = fg_pixels[indices].astype(np.float32)
-        else:
-            samples = fg_pixels.astype(np.float32)
-
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        _, labels, centers = cv2.kmeans(samples, k, None, criteria, 3, cv2.KMEANS_PP_CENTERS)
-
-        counts = np.bincount(labels.flatten())
-        sorted_indices = np.argsort(-counts)
-
-        hex_colors = []
-        for idx in sorted_indices:
-            c = centers[idx].astype(int)
-            hex_code = f"#{c[0]:02x}{c[1]:02x}{c[2]:02x}"
-            hex_colors.append(hex_code)
-
-        return hex_colors
-
     def process(
         self,
         source: Union[str, Path, bytes, np.ndarray, Image.Image],
-        background: str = "white",
-        aspect_ratio: str = "1:1",
+        background: str = "auto",
+        aspect_ratio: str = "auto",
         enhancement: str = "auto",
-        shadow_mode: str = "professional",
+        shadow_mode: str = "auto",
         target_dim: int = 1080,
         output_format: str = "JPEG",
         model_name: Optional[str] = None,
@@ -103,69 +68,118 @@ class ProductImagePipeline:
         save_files: bool = True,
     ) -> Dict[str, Any]:
         """
-        Executes complete production cataloging pipeline.
+        Executes fully automatic production cataloging pipeline from a single photo.
         """
         start_time = time.perf_counter()
         warnings: List[str] = []
 
-        # Configure model and edge matting
-        if model_name and model_name != self.segmenter.model_name:
+        # 1. Safe Load & Initial Quality Analysis (Before)
+        bgr_orig, rgb_pil = load_image_safely(source)
+        rgb_np = np.array(rgb_pil)
+        quality_before = analyze_image_quality(bgr_orig)
+
+        # Retake check 1: Completely unusable photo (e.g. pitch black or totally blurry)
+        if quality_before["overall_score"] < 25:
+            proc_time = round((time.perf_counter() - start_time) * 1000, 1)
+            return {
+                "status": "needs_retake",
+                "reason": "The photo quality is too low for automatic cataloging.",
+                "voice_prompt": quality_before.get("recommendation", "Please move to a brighter place and retake the photo."),
+                "quality_score": quality_before["overall_score"],
+                "quality_before": quality_before,
+                "processing_time_ms": proc_time,
+            }
+
+        # 2. Product Segmentation with Automatic Cascade
+        # Configure model if specified, otherwise rely on default IS-Net with fallbacks
+        if model_name and model_name not in ("auto", "default") and model_name != self.segmenter.model_name:
             self.segmenter.model_name = model_name
         self.segmenter.enable_alpha_matting = alpha_matting
 
-        # 1. Safe Load & Initial Quality Analysis (Before)
-        bgr_orig, rgb_pil = load_image_safely(source)
-        quality_before = analyze_image_quality(bgr_orig)
-
-        if quality_before["overall_score"] < 40:
-            warnings.append(
-                f"Low input quality ({quality_before['overall_score']}/100): {quality_before['recommendation']}"
-            )
-
-        # 2. Product Segmentation & Background Removal
         try:
             transparent_pil, seg_res = self.remover.remove_background(rgb_pil, detection_mode=detection_mode)
         except SegmentationError as e:
-            # Safe failure fallback: Return original image with clear warning
             proc_time = round((time.perf_counter() - start_time) * 1000, 1)
             return {
-                "status": "warning",
-                "message": str(e),
+                "status": "needs_retake",
+                "reason": "The main product could not be separated clearly from the background.",
+                "voice_prompt": "Please place the product on a clear surface and take the photo again.",
                 "quality_before": quality_before,
-                "quality_after": quality_before,
-                "improvement": 0,
-                "bounding_box": {},
-                "dominant_colors": [],
                 "processing_time_ms": proc_time,
-                "warnings": [str(e)],
             }
 
-        # 3. Tone & Color Restoration (on foreground pixels)
-        # Lighting correction (CLAHE + Gamma)
+        # Retake check 2: Empty or failed mask
+        fg_pixel_count = int(np.sum(seg_res.mask > 40))
+        total_pixels = seg_res.mask.size
+        product_area_pct = round(float((fg_pixel_count / total_pixels) * 100.0), 1)
+
+        if product_area_pct < 0.8 or product_area_pct > 98.8:
+            proc_time = round((time.perf_counter() - start_time) * 1000, 1)
+            return {
+                "status": "needs_retake",
+                "reason": "The main product could not be separated clearly from the background.",
+                "voice_prompt": "Please place the product on a clear surface and take the photo again.",
+                "quality_before": quality_before,
+                "processing_time_ms": proc_time,
+            }
+
+        # 3. Automatic Product Detection & Indian Handicraft Recognition
+        product_detection = detect_product(
+            rgb_np,
+            mask=seg_res.mask,
+            bounding_box=seg_res.bounding_box,
+        )
+
+        # 4. Objective Visual Attributes Extraction
+        visual_attrs = extract_attributes(
+            rgb_np,
+            mask=seg_res.mask,
+            bounding_box=seg_res.bounding_box,
+        )
+
+        # 5. Tone & Color Restoration (on foreground pixels)
         lighting_fixed = correct_lighting(transparent_pil, mask=seg_res.mask)
-        # White balance correction (Shades-of-Gray constancy)
         wb_fixed = correct_white_balance(lighting_fixed, mask=seg_res.mask)
 
-        # 4. Smart Cropping & Centering to Target Aspect Ratio
+        # 6. Proportional Aspect Ratio Alignment & Smart Centering
+        resolved_ratio = "1:1" if aspect_ratio in ("auto", "default") else aspect_ratio
         centered_pil, final_crop_box = crop_and_center_product(
             wb_fixed,
             mask_or_bbox=seg_res.bounding_box,
-            aspect_ratio=aspect_ratio,
+            aspect_ratio=resolved_ratio,
             padding=0.08,
         )
 
-        # 5. Grounding Shadow Generation
-        if shadow_mode.lower() != "none":
+        # 7. Intelligent Grounding Shadow Handling
+        if shadow_mode == "auto":
+            resolved_shadow, shadow_intensity = ShadowHandler.select_automatic_shadow_mode(
+                centered_pil,
+                category=product_detection["category"],
+                shape=visual_attrs["shape"],
+            )
+        else:
+            resolved_shadow = shadow_mode
+            shadow_intensity = 0.30
+
+        if resolved_shadow != "none" and shadow_intensity > 0.01:
             grounded_pil = apply_grounding_shadow(
                 centered_pil,
                 bbox=final_crop_box,
-                mode=shadow_mode,
-                intensity=0.32,
+                mode=resolved_shadow,
+                intensity=shadow_intensity,
             )
+            shadow_applied_desc = f"{resolved_shadow}_shadow"
         else:
             grounded_pil = centered_pil
+            shadow_applied_desc = "none"
 
-        # 6. Clean Neutral Backdrop Generation & Conservative Enhancement
+        # 8. Intelligent Contrast-Aware Background Decision
+        if background == "auto":
+            resolved_bg = MarketplaceGenerator.select_automatic_background(grounded_pil)
+        else:
+            resolved_bg = background
+
+        # 9. Clean Neutral Backdrop Generation & Conservative Enhancement
         marketplace_pil = MarketplaceGenerator.enhance_product(
             grounded_pil,
             sharpness="medium" if enhancement in ("auto", "medium") else "low",
@@ -173,70 +187,121 @@ class ProductImagePipeline:
             saturation="low",
             denoise=True,
         )
-        final_rgb = MarketplaceGenerator.apply_background(marketplace_pil, background_type=background)
+        final_rgb = MarketplaceGenerator.apply_background(marketplace_pil, background_type=resolved_bg)
 
-        # 7. Marketplace Resampling & Standardization (1080x1080)
+        # 10. Marketplace Resampling & Standardization (1080x1080)
+        final_export_fmt = "PNG" if resolved_bg == "transparent" else output_format
         formatted_img = MarketplaceFormatter.format_image(
             final_rgb,
             target_width=target_dim,
             target_height=target_dim,
-            export_format=output_format,
+            export_format=final_export_fmt,
             quality=90,
         )
 
-        # 8. Post-Processing Quality Verification (After)
-        # Convert formatted PIL to BGR array for quality analyzer
+        # 11. Post-Processing Quality Verification (After)
         bgr_after = cv2.cvtColor(np.array(formatted_img.convert("RGB")), cv2.COLOR_RGB2BGR)
         quality_after = analyze_image_quality(bgr_after)
-
-        # Sanity check: Ensure foreground wasn't obliterated
-        after_alpha_check = np.array(centered_pil.split()[-1])
-        if np.sum(after_alpha_check > 50) < 500:
-            warnings.append("Warning: Segmented product area is suspiciously small.")
-
         improvement = max(0, quality_after["overall_score"] - quality_before["overall_score"])
 
-        # 9. Extract Dominant Colors for Catalog Filtering
-        dominant_colors = self.extract_dominant_colors(wb_fixed, k=4)
-
-        # 10. File Persistence
+        # 12. File Persistence
         file_id = uuid.uuid4().hex[:12]
-        output_filename = f"catalog_{file_id}.{output_format.lower() if output_format.lower() != 'jpeg' else 'jpg'}"
+        ext = "png" if final_export_fmt.upper() == "PNG" else "jpg"
+        orig_filename = f"orig_{file_id}.jpg"
+        catalog_filename = f"catalog_{file_id}.{ext}"
         trans_filename = f"transparent_{file_id}.png"
 
-        out_path = self.output_dir / output_filename
+        orig_path = self.output_dir / orig_filename
+        out_path = self.output_dir / catalog_filename
         trans_path = self.output_dir / trans_filename
 
         if save_files:
+            # Save original for before/after comparison
+            rgb_pil.convert("RGB").save(str(orig_path), format="JPEG", quality=88)
+            # Save processed catalog listing
             MarketplaceFormatter.save_to_file(
                 formatted_img,
                 out_path,
                 target_width=target_dim,
                 target_height=target_dim,
-                export_format=output_format,
+                export_format=final_export_fmt,
                 quality=90,
             )
+            # Save transparent cutout
             centered_pil.save(str(trans_path), format="PNG", optimize=True)
 
         proc_time = round((time.perf_counter() - start_time) * 1000, 1)
 
+        # 13. Construct Complete Structured Product Profile
+        bg_hex_map = {
+            "white": "#FFFFFF",
+            "off-white": "#F8F9FA",
+            "light-gray": "#F0F0F2",
+            "transparent": "transparent",
+        }
+        chosen_bg_desc = f"{resolved_bg} ({bg_hex_map.get(resolved_bg, '#F8F9FA')})"
+
+        # Craft human-friendly spoken recommendation
+        voice_text = (
+            f"{product_detection['display_text']}. "
+            f"Image cleaned, lighting improved, and prepared for marketplace."
+        )
+
         return {
             "status": "success",
+            "product": {
+                "name": product_detection["name"],
+                "category": product_detection["category"],
+                "confidence": product_detection["confidence"],
+                "confidence_label": product_detection["confidence_label"],
+                "display_text": product_detection["display_text"],
+            },
+            "visual_attributes": {
+                "colors": visual_attrs["dominant_colors"],
+                "palette_hex": visual_attrs["palette_hex"],
+                "shape": visual_attrs["shape"],
+                "pattern": visual_attrs["pattern"],
+                "orientation": visual_attrs["orientation"],
+                "texture": visual_attrs["texture"],
+            },
+            "geometry": {
+                "bounding_box": seg_res.bounding_box,
+                "product_area_percentage": product_area_pct,
+            },
+            "image": {
+                "original": str(orig_path) if save_files else None,
+                "processed": str(out_path) if save_files else None,
+                "transparent": str(trans_path) if save_files else None,
+                "width": target_dim,
+                "height": target_dim,
+            },
+            "quality": {
+                "before": quality_before["overall_score"],
+                "after": quality_after["overall_score"],
+                "improvement": improvement,
+                "metrics_before": quality_before,
+                "metrics_after": quality_after,
+            },
+            "processing": {
+                "time_ms": proc_time,
+                "segmentation_engine": seg_res.model_used,
+                "background_chosen": chosen_bg_desc,
+                "shadow_applied": shadow_applied_desc,
+                "aspect_ratio_chosen": resolved_ratio,
+            },
+            "voice_prompt": voice_text,
+            "warnings": warnings,
+            # Top-level backward compatibility aliases for existing test suites
             "output_image": str(out_path) if save_files else None,
             "transparent_image": str(trans_path) if save_files else None,
-            "quality_before": quality_before,
-            "quality_after": quality_after,
             "before_score": quality_before["overall_score"],
             "after_score": quality_after["overall_score"],
             "improvement": improvement,
+            "dominant_colors": visual_attrs["palette_hex"],
             "bounding_box": seg_res.bounding_box,
-            "dominant_colors": dominant_colors,
-            "aspect_ratio": aspect_ratio,
-            "background": background,
             "processing_time_ms": proc_time,
-            "recommendation": quality_before["recommendation"],
-            "warnings": warnings,
         }
+
 
 
 # Global singleton pipeline instance
@@ -252,21 +317,28 @@ def get_pipeline() -> ProductImagePipeline:
 
 
 def process_product_image(
-    image_path: Union[str, Path, bytes, Image.Image],
-    background: str = "white",
-    aspect_ratio: str = "1:1",
+    image: Optional[Union[str, Path, bytes, Image.Image]] = None,
+    image_path: Optional[Union[str, Path, bytes, Image.Image]] = None,
+    background: str = "auto",
+    aspect_ratio: str = "auto",
     enhancement: str = "auto",
-    shadow_mode: str = "professional",
+    shadow_mode: str = "auto",
     output_format: str = "JPEG",
     target_dim: int = 1080,
-    model_name: str = "isnet-general-use",
+    model_name: str = "auto",
     alpha_matting: bool = True,
     detection_mode: str = "auto",
 ) -> Dict[str, Any]:
-    """Exposed functional API matching Module 12 specification."""
+    """
+    Master functional entrypoint for fully automatic image processing.
+    Accepts ONLY the input image (via `image` or `image_path`).
+    """
+    target = image if image is not None else image_path
+    if target is None:
+        raise ValueError("Either `image` or `image_path` must be provided.")
     pipeline = get_pipeline()
     return pipeline.process(
-        source=image_path,
+        source=target,
         background=background,
         aspect_ratio=aspect_ratio,
         enhancement=enhancement,
@@ -277,3 +349,4 @@ def process_product_image(
         alpha_matting=alpha_matting,
         detection_mode=detection_mode,
     )
+

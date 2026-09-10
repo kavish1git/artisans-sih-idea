@@ -25,7 +25,9 @@ class ProductCropper:
 
     @staticmethod
     def parse_aspect_ratio(ratio_str: str) -> Tuple[float, float]:
-        """Parses aspect ratio string like '1:1', '4:5', '3:4', '16:9'."""
+        """Parses aspect ratio string like 'auto', '1:1', '4:5', '3:4', '16:9'."""
+        if ratio_str.lower() in ("auto", "default", "standard"):
+            return 1.0, 1.0
         if ratio_str in ASPECT_RATIOS:
             return ASPECT_RATIOS[ratio_str]
         try:
@@ -33,6 +35,7 @@ class ProductCropper:
             return float(parts[0]), float(parts[1])
         except Exception:
             return 1.0, 1.0
+
 
     def crop_and_center(
         self,

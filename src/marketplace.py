@@ -121,10 +121,50 @@ class MarketplaceGenerator:
 
         return solid_bg
 
+    @classmethod
+
+    def select_automatic_background(cls, rgba_image: Image.Image) -> str:
+        """
+        Intelligently decides background color based on product luminance:
+        - Very light / white crafts (e.g. white marble, ivory, cream lace): 'light-gray' (#F0F0F2) to prevent edge bleed.
+        - Darker or vibrant crafts: clean 'off-white' (#F8F9FA).
+        """
+        if rgba_image.mode != "RGBA":
+            return "off-white"
+
+        arr = np.array(rgba_image)
+        alpha = arr[:, :, 3]
+        rgb = arr[:, :, :3]
+
+        fg_mask = alpha > 80
+        if np.sum(fg_mask) < 50:
+            return "off-white"
+
+        # Calculate luminance in CIE-LAB space
+        bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+        l_channel = lab[:, :, 0]  # L in [0, 255] in OpenCV, maps to [0, 100]
+
+        fg_lightness = float(np.mean(l_channel[fg_mask])) * (100.0 / 255.0)
+
+        # Inspect edge pixels to prevent boundary washout
+        eroded_mask = cv2.erode((fg_mask).astype(np.uint8), np.ones((5, 5), np.uint8))
+        edge_mask = (fg_mask.astype(np.uint8) - eroded_mask) > 0
+        if np.sum(edge_mask) > 20:
+            edge_lightness = float(np.mean(l_channel[edge_mask])) * (100.0 / 255.0)
+        else:
+            edge_lightness = fg_lightness
+
+        # If product or product edges are very bright/white (> 80), use light-gray for contrast
+        if fg_lightness > 80.0 or edge_lightness > 83.0:
+            return "light-gray"
+        else:
+            return "off-white"
+
 
 def generate_marketplace_image(
     image: Image.Image,
-    background: str = "white",
+    background: Optional[str] = None,
     sharpness: str = "medium",
     contrast: str = "auto",
     saturation: str = "low",
@@ -133,4 +173,9 @@ def generate_marketplace_image(
     enhanced = MarketplaceGenerator.enhance_product(
         image, sharpness=sharpness, contrast=contrast, saturation=saturation
     )
-    return MarketplaceGenerator.apply_background(enhanced, background_type=background)
+    if background is None or background == "auto":
+        bg_type = MarketplaceGenerator.select_automatic_background(image)
+    else:
+        bg_type = background
+    return MarketplaceGenerator.apply_background(enhanced, background_type=bg_type)
+

@@ -102,13 +102,49 @@ class ShadowHandler:
         composite = Image.alpha_composite(shadow_img, transparent_product)
         return composite
 
+    @staticmethod
+    def select_automatic_shadow_mode(
+
+        transparent_product: Image.Image,
+        category: Optional[str] = None,
+        shape: Optional[str] = None,
+    ) -> Tuple[str, float]:
+        """
+        Intelligently decides shadow mode and intensity:
+        - Flat textiles / 2D paintings: 'none' or zero ground shadow to avoid fake appearance.
+        - Delicate jewelry / hanging crafts: 'natural' soft ambient occlusion (0.22).
+        - 3D standing crafts (pottery, baskets, wood carving, brass idol): 'professional' grounding (0.32).
+        """
+        cat_lower = (category or "").lower()
+        if "textile" in cat_lower or "painting" in cat_lower:
+            return "none", 0.0
+        elif "jewelry" in cat_lower or shape == "irregular":
+            return "natural", 0.22
+        else:
+            return "professional", 0.32
+
 
 def apply_grounding_shadow(
     image: Image.Image,
     bbox: Optional[Dict[str, int]] = None,
-    mode: str = "professional",
-    intensity: float = 0.30,
+    mode: str = "auto",
+    intensity: Optional[float] = None,
+    category: Optional[str] = None,
+    shape: Optional[str] = None,
 ) -> Image.Image:
-    """Convenience functional wrapper for grounding shadow synthesis."""
-    handler = ShadowHandler(mode=mode)
-    return handler.add_grounding_shadow(image, bbox=bbox, shadow_intensity=intensity)
+    """Convenience functional wrapper with automatic shadow mode resolution."""
+    if mode == "auto":
+        resolved_mode, default_intensity = ShadowHandler.select_automatic_shadow_mode(
+            image, category=category, shape=shape
+        )
+    else:
+        resolved_mode = mode
+        default_intensity = 0.30
+
+    final_intensity = intensity if intensity is not None else default_intensity
+    if resolved_mode == "none" or final_intensity <= 0.01:
+        return image
+
+    handler = ShadowHandler(mode=resolved_mode)
+    return handler.add_grounding_shadow(image, bbox=bbox, shadow_intensity=final_intensity)
+
