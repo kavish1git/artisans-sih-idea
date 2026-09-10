@@ -1,3 +1,12 @@
+---
+title: Artisan Smart Cataloging CV
+emoji: 🏺
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 8000
+---
+
 # AI-Driven Market Linkage & Smart Cataloging for Marginalized Artisans (SIH26090)
 
 ## Production-Ready Computer Vision System
