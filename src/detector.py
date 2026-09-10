@@ -223,106 +223,38 @@ class ProductDetector:
         # 2. Extract visual domain cues
         cues = self._extract_visual_cues(product_crop, mask_crop)
 
-        # 3. Model inference (MobileNetV2 feature logits)
-        logits = None
-        if self.session is not None:
-            try:
-                input_tensor = self._preprocess_for_onnx(product_crop)
-                ort_inputs = {self.session.get_inputs()[0].name: input_tensor}
-                logits = self.session.run(None, ort_inputs)[0][0]
-            except Exception:
-                logits = None
+        # 3. Use Stage 2 Calibrated ProductClassifier
+        from src.classification import classify_product
+        clf_result = classify_product(product_crop, cropped_mask=mask_crop)
 
-        # 4. Score each Indian Handicraft category
-        category_scores: Dict[str, float] = {}
+        category = clf_result["category"]
+        craft_name = clf_result["object_name"]
+        confidence = clf_result["confidence"]
+        status = clf_result["confidence_status"]
 
-        for cat_name, cat_info in HANDICRAFT_TAXONOMY.items():
-            score = 0.20  # Base prior
-
-            if logits is not None:
-                # Sum probabilities of matching ImageNet synsets
-                cat_indices = cat_info["imagenet_classes"]
-                cat_logits = [logits[idx] for idx in cat_indices if idx < len(logits)]
-                if cat_logits:
-                    max_logit = max(cat_logits)
-                    # Convert to sigmoid-style score [0.0, 1.0]
-                    model_score = 1.0 / (1.0 + np.exp(-max_logit / 3.0))
-                    score += model_score * 0.60
-
-            # Complement with visual cues
-            if cat_name == "Pottery":
-                if cues["is_terracotta"]:
-                    score += 0.35
-                elif cues["aspect_ratio"] > 0.6 and cues["aspect_ratio"] < 1.4:
-                    score += 0.10
-            elif cat_name == "Metalcraft":
-                if cues["is_brass"]:
-                    score += 0.40
-            elif cat_name == "Basket":
-                if (15 <= cues.get("mean_hue", 0) <= 38) and cues["laplacian_var"] > 350:
-                    score += 0.35
-            elif cat_name == "Textile":
-                if cues["laplacian_var"] > 250 and (cues["aspect_ratio"] > 1.3 or cues["aspect_ratio"] < 0.7):
-                    score += 0.25
-            elif cat_name == "Jewelry":
-                # Jewelry typically has delicate thin components and smaller area
-                if (bw * bh) < (0.28 * w * h) or (cues["laplacian_var"] > 450):
-                    score += 0.30
-
-            category_scores[cat_name] = round(float(np.clip(score, 0.15, 0.96)), 2)
-
-        # 5. Select highest scoring category
-        best_cat = max(category_scores, key=category_scores.get)
-        raw_confidence = category_scores[best_cat]
-
-        # 6. Specific craft name selection & Confidence Calibration
-        cat_info = HANDICRAFT_TAXONOMY[best_cat]
-
-        if raw_confidence >= 0.85:
-            # High confidence: Return specific craft
-            if best_cat == "Pottery":
-                craft_name = "Terracotta Pottery" if cues["is_terracotta"] else "Ceramic Craft"
-            elif best_cat == "Textile":
-                craft_name = "Phulkari Dupatta" if cues["laplacian_var"] > 400 else "Handloom Textile"
-            elif best_cat == "Jewelry":
-                craft_name = "Handcrafted Earrings" if cues["aspect_ratio"] < 0.9 else "Handmade Jewelry"
-            elif best_cat == "Metalcraft":
-                craft_name = "Brass Craft" if cues["is_brass"] else "Metal Craft"
-            elif best_cat == "Basket":
-                craft_name = "Handmade Woven Basket"
-            elif best_cat == "Woodcraft":
-                craft_name = "Wood Carving"
-            elif best_cat == "Leather & Bag":
-                craft_name = "Handmade Bag"
-            else:
-                craft_name = cat_info["specific_crafts"][0]
-
+        if status == "high":
             confidence_label = "detected"
             display_text = f"{craft_name} detected"
-
-        elif raw_confidence >= 0.60:
-            # Medium confidence: Return generic category name without hallucinating
-            craft_name = cat_info["generic_name"]
+        elif status == "medium":
             confidence_label = "possible"
             display_text = f"Possible {craft_name.lower()} detected"
-
         else:
-            # Low confidence: Do not guess blindly
-            craft_name = "Handicraft item"
-            best_cat = "Other handicraft"
-            raw_confidence = round(float(np.clip(raw_confidence, 0.45, 0.59)), 2)
             confidence_label = "uncertain"
             display_text = "Product detected, but exact type is uncertain"
 
         return {
             "detected": True,
             "name": craft_name,
-            "category": best_cat,
-            "confidence": raw_confidence,
+            "category": category,
+            "subcategory": clf_result.get("subcategory", ""),
+            "craft_type": clf_result.get("craft_type", ""),
+            "confidence": confidence,
             "confidence_label": confidence_label,
+            "confidence_status": status,
             "display_text": display_text,
-            "category_scores": category_scores,
+            "top_categories": clf_result.get("top_categories", []),
         }
+
 
 
 # Global singleton detector
