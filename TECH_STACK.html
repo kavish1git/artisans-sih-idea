@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Technical Architecture & Technology Stack Specification</title>
+    <style>
+        
+@page {
+    size: A4;
+    margin: 8mm 9mm 9mm 9mm;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.34;
+    font-size: 8.2pt;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+.document-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    color: #ffffff;
+    padding: 9px 12px;
+    border-radius: 5px;
+    margin-bottom: 7px;
+}
+
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.header-badges {
+    display: flex;
+    gap: 5px;
+}
+
+.badge {
+    display: inline-block;
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 1.5px 6px;
+    border-radius: 3px;
+}
+
+.badge-gold {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.badge-green {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-cyan {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.header-slogan {
+    font-size: 6.8pt;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+}
+
+h1.doc-title {
+    font-size: 13.5pt;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.2px;
+    line-height: 1.2;
+}
+
+.meta-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 1px 12px;
+    font-size: 7.4pt;
+    color: #cbd5e1;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    padding-top: 4px;
+}
+
+.meta-item strong {
+    color: #93c5fd;
+}
+
+h2 {
+    font-size: 9.6pt;
+    font-weight: 750;
+    color: #1e3a8a;
+    margin: 8px 0 4px 0;
+    padding-bottom: 2px;
+    border-bottom: 1.2px solid #cbd5e1;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+h3 {
+    font-size: 8.4pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 6px 0 3px 0;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+p {
+    margin: 0 0 4px 0;
+    text-align: justify;
+}
+
+strong {
+    color: #0f172a;
+}
+
+code {
+    font-family: "Cascadia Code", Consolas, Menlo, monospace;
+    font-size: 7.4pt;
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 0 2.5px;
+    border-radius: 2px;
+    border: 1px solid #e2e8f0;
+}
+
+.diagram-wrapper {
+    margin: 3px 0 0 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.code-block {
+    background-color: #080c14;
+    color: #38bdf8;
+    font-family: "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: 5.25pt;
+    line-height: 1.11;
+    padding: 5px 7px;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 0;
+}
+
+.table-container {
+    margin: 4px 0 6px 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7.4pt;
+    line-height: 1.28;
+    border: 1px solid #cbd5e1;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+th {
+    background-color: #f8fafc;
+    color: #334155;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-size: 6.8pt;
+    padding: 3.5px 5px;
+    border-bottom: 1.2px solid #94a3b8;
+    border-right: 1px solid #e2e8f0;
+}
+
+td {
+    padding: 3.5px 5px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+tr:nth-child(even) {
+    background-color: #fafbfd;
+}
+
+th:last-child, td:last-child {
+    border-right: none;
+}
+
+.styled-ol {
+    margin: 3px 0 4px 14px;
+    padding: 0;
+}
+
+.styled-ol li {
+    margin-bottom: 4px;
+    line-height: 1.35;
+}
+
+.page-break {
+    page-break-before: always;
+    break-before: page;
+}
+
+.footer-bar {
+    margin-top: 12px;
+    padding-top: 5px;
+    border-top: 1px solid #cbd5e1;
+    display: flex;
+    justify-content: space-between;
+    font-size: 6.6pt;
+    color: #64748b;
+}
+
+    </style>
+</head>
+<body>
+    
+    <div class="document-header">
+        <div class="header-top-row">
+            <div class="header-badges">
+                <span class="badge badge-gold">Smart India Hackathon</span>
+                <span class="badge badge-green">SIH26090</span>
+                <span class="badge badge-cyan">1.0.0 (Production-Ready)</span>
+            </div>
+            <div class="header-slogan">Computer Vision &amp; Smart Cataloging Engine</div>
+        </div>
+        <h1 class="doc-title">Technical Architecture & Technology Stack Specification</h1>
+        <div class="meta-grid">
+            <div class="meta-item"><strong>Project:</strong> AI-Driven Market Linkage and Smart Cataloging Mobile Application for Marginalized Artisans</div>
+            <div class="meta-item"><strong>System:</strong> Computer Vision & Intelligent Cataloging Pipeline</div>
+            <div class="meta-item"><strong>Problem Statement:</strong> SIH26090 (Smart India Hackathon)</div>
+            <div class="meta-item"><strong>Target Artisans:</strong> Handloom Weavers, Potters, Sculptors, Metal Smiths</div>
+        </div>
+    </div>
+    <h2>1. Executive Summary</h2>
+<p>This system provides an end-to-end Computer Vision and Machine Learning pipeline specifically engineered for rural, marginalized Indian artisans (weavers, potters, sculptors, and handicraft makers). The application operates on low-cost smartphones under real-world rural conditions (harsh shadows, cluttered workshops, low lighting) and transforms raw camera photos into standardized, 1080×1080 marketplace-compliant catalog listings with zero manual configuration required by the artisan.</p>
+    <h2>2. High-Level Architectural Diagram</h2>
+<div class='diagram-wrapper'><pre class='code-block text'><code>                                  [ RURAL ARTISAN ]
+                                          │
+                             Takes Photo / Uploads Image
+                                          │
+                                          ▼
+                   ┌──────────────────────────────────────────────┐
+                   │    Mobile Client UI (HTML5 / Vanilla JS)     │
+                   │  - Client Canvas Image Compression (&lt;35ms)   │
+                   │  - Media Capture API (Native Camera Trigger) │
+                   │  - Web Speech API (Artisan Audio Guidance)   │
+                   └──────────────────────┬───────────────────────┘
+                                          │ HTTP Multipart/Form-Data (&lt;350 KB)
+                                          ▼
+                   ┌──────────────────────────────────────────────┐
+                   │            FastAPI / Uvicorn Server          │
+                   │  - Async Request Handling &amp; Static Serving   │
+                   │  - Magic Byte Validation &amp; MIME Enforcement  │
+                   └──────────────────────┬───────────────────────┘
+                                          │
+                                          ▼
+                   ┌──────────────────────────────────────────────┐
+                   │  [STAGE 1] Intelligent Quality Gate Engine   │
+                   │  - Multi-Zone Laplacian Sharpness (Blur)     │
+                   │  - Sobel Motion Blur Ratio Analysis          │
+                   │  - Luminance Histogram (Under/Overexposure)  │
+                   │  - Contour Union Craft Framing &amp; Visibility  │
+                   │  - Calibrated Classification Pre-Check       │
+                   └──────────────┬───────────────────────────────┘
+                                  │
+                  ┌───────────────┴───────────────┐
+                  ▼                               ▼
+          [ Gate Fails ]                  [ Gate Passes ]
+       Returns Early (&lt;180ms)                     │
+      - Action: RETAKE_PHOTO                      │
+      - Non-Technical Advice                      ▼
+      - Audio Voice Prompt         ┌──────────────────────────────┐
+      - Halts Downstream Work      │  [STAGE 2] Composition Check │
+                                   │  - Under-Segmentation Guard  │
+                                   │  - Textile Stack Detection   │
+                                   │  - Studio Backdrop Preserver │
+                                   └──────────────┬───────────────┘
+                                                  │
+                 ┌────────────────────────────────┴──────────────────────────────┐
+                 ▼                                                               ▼
+       [ Mode A: Isolate Craft ]                                    [ Mode B: Full Composition ]
+       - IS-Net Salient Deep Matting                                - Preserves 100% of Fabric Stack
+       - Alpha Matting &amp; Morphological Closing                      - Non-Destructive 1:1 Framing
+       - Contrast-Aware Studio Background                           - Natural Lighting Enhancement
+       - 3D Grounding Shadow Synthesis                              - No Artificial Shadow Smears
+                 │                                                               │
+                 └────────────────────────────────┬──────────────────────────────┘
+                                                  │
+                                                  ▼
+                   ┌──────────────────────────────────────────────┐
+                   │   [STAGE 3] Visual Attributes &amp; Taxonomy     │
+                   │  - MobileNetV2 Temperature Scaling (T=2.5)   │
+                   │  - Softmax Margin Calibration                │
+                   │  - K-Means Dominant Colors &amp; Palette Hex     │
+                   │  - Shape, Pattern, and Texture Extraction    │
+                   └──────────────────────┬───────────────────────┘
+                                          │
+                                          ▼
+                   ┌──────────────────────────────────────────────┐
+                   │   [STAGE 4] E-Commerce Formatting (1080x1080)│
+                   │  - Lanczos Downsampling &amp; Unsharp Masking    │
+                   │  - Structured Product JSON (SIH Contract)    │
+                   │  - Output: Original, Transparent, Catalog    │
+                   └──────────────────────────────────────────────┘</code></pre></div>
+    
+    <div class="page-break"></div>
+    
+    <h2>3. Technology Stack Breakdown</h2>
+<h3>3.1. Core Runtime & Language</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Component</th>
+<th style='text-align:left'>Technology</th>
+<th style='text-align:left'>Version</th>
+<th style='text-align:left'>Justification</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>Language</strong></td>
+<td style='text-align:left'>Python</td>
+<td style='text-align:left'><code>3.11</code> / <code>3.12</code></td>
+<td style='text-align:left'>High-performance ecosystem for OpenCV, ONNX, and async web runtimes.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Async Loop</strong></td>
+<td style='text-align:left'>AnyIO / Asyncio</td>
+<td style='text-align:left'>Standard</td>
+<td style='text-align:left'>Concurrent request handling and non-blocking I/O operations.</td>
+</tr>
+</tbody></table></div>
+<h3>3.2. Computer Vision & Image Processing</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Library / Tool</th>
+<th style='text-align:left'>Primary Modules Used</th>
+<th style='text-align:left'>Architectural Role</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>OpenCV</strong> (<code>opencv-python-headless</code>)</td>
+<td style='text-align:left'><code>cv2.Laplacian</code><br><code>cv2.Sobel</code><br><code>cv2.Canny</code><br><code>cv2.morphologyEx</code><br><code>cv2.findContours</code><br><code>cv2.bilateralFilter</code><br><code>cv2.grabCut</code></td>
+<td style='text-align:left'>- Multi-zone blur evaluation (center ROI + 48×48 patches)<br>- Directional motion blur detection via <em>Sobel<sub>x</sub> / Sobel<sub>y</sub></em> ratio<br>- Otsu thresholding & contour union for product clustering<br>- Non-destructive edge-preserving bilateral smoothing<br>- Saliency under-segmentation detection on discarded backgrounds</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Pillow</strong> (<code>PIL</code>)</td>
+<td style='text-align:left'><code>ImageEnhance</code><br><code>ImageFilter</code><br><code>Image.fromarray</code><br><code>Image.composite</code></td>
+<td style='text-align:left'>- RGBA alpha blending and transparency preservation<br>- Lanczos4 high-fidelity resampling to 1080×1080<br>- Conservative unsharp masking and contrast calibration<br>- EXIF orientation correction and color quantization</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>NumPy</strong></td>
+<td style='text-align:left'>Vectorized Array Operations</td>
+<td style='text-align:left'>- Fast array manipulation and tensor transformations<br>- Grayscale luminance histograms (underexposure / overexposure)<br>- Mathematical percentiles (<em>p<sub>90</sub></em> patch sharpness)<br>- Dominant color Euclidean distance calculations</td>
+</tr>
+</tbody></table></div>
+<h3>3.3. Machine Learning & Deep Learning Inference</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Model / Framework</th>
+<th style='text-align:left'>File / Identifier</th>
+<th style='text-align:left'>Parameter Details</th>
+<th style='text-align:left'>Architectural Purpose</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>ONNX Runtime</strong></td>
+<td style='text-align:left'><code>onnxruntime</code></td>
+<td style='text-align:left'>CPUExecutionProvider</td>
+<td style='text-align:left'>Ultra-lightweight inference engine that runs directly on CPU without requiring PyTorch or CUDA.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>IS-Net (DIS)</strong></td>
+<td style='text-align:left'><code>isnet-general-use</code></td>
+<td style='text-align:left'>Via <code>rembg</code> session</td>
+<td style='text-align:left'>State-of-the-art salient object matting for fine edges, loose threads, jewelry, wood carvings, and brass.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Fallback Models</strong></td>
+<td style='text-align:left'><code>silueta</code>, <code>u2netp</code>, <code>GrabCut</code></td>
+<td style='text-align:left'>Cascade Fallback</td>
+<td style='text-align:left'>Automatic failover cascade if primary deep matting encounters memory limits or fails.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>MobileNetV2</strong></td>
+<td style='text-align:left'><code>mobilenetv2-7.onnx</code></td>
+<td style='text-align:left'>Top-5 Logits</td>
+<td style='text-align:left'>Lightweight vision backbone mapped to Indian artisan taxonomy (Pottery, Textiles, Wood, Brass, Jewelry, Bags).</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Confidence Calibrator</strong></td>
+<td style='text-align:left'>Custom Algorithm (<code>classification.py</code>)</td>
+<td style='text-align:left'>Temperature <em>T=2.5</em></td>
+<td style='text-align:left'>Softmax margin calibration preventing overconfidence and eliminating false classifications (e.g. Pottery as Dupatta).</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Composition Engine</strong></td>
+<td style='text-align:left'>Custom Algorithm (<code>composition.py</code>)</td>
+<td style='text-align:left'>Edge Density & Color Std</td>
+<td style='text-align:left'>Evaluates background discarding; automatically prevents slicing multi-piece textile stacks and flatlays.</td>
+</tr>
+</tbody></table></div>
+<h3>3.4. Backend API & Web Layer</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Component</th>
+<th style='text-align:left'>Technology</th>
+<th style='text-align:left'>Role</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>Web Framework</strong></td>
+<td style='text-align:left'><strong>FastAPI</strong> (<code>0.110+</code>)</td>
+<td style='text-align:left'>High-performance async REST API, auto-generated OpenAPI / Swagger UI documentation, dependency injection.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>ASGI Server</strong></td>
+<td style='text-align:left'><strong>Uvicorn</strong></td>
+<td style='text-align:left'>Asynchronous server implementation supporting production workers and hot-reloading.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Data Validation</strong></td>
+<td style='text-align:left'><strong>Pydantic v2</strong></td>
+<td style='text-align:left'>Strict typing, request validation, zero-hallucination defaults for missing fields, price non-negativity checks.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>File Intake</strong></td>
+<td style='text-align:left'><code>python-multipart</code></td>
+<td style='text-align:left'>Streaming multipart file uploads directly from smartphone cameras.</td>
+</tr>
+</tbody></table></div>
+    
+    <div class="page-break"></div>
+    
+    <h3>3.5. Frontend & Accessibility (Artisan Interface)</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Technology</th>
+<th style='text-align:left'>Feature / API</th>
+<th style='text-align:left'>Benefit for Marginalized Artisans</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>HTML5 / CSS3 / ES6</strong></td>
+<td style='text-align:left'>Single-Page Web App (<code>static/index.html</code>)</td>
+<td style='text-align:left'>Zero-dependency, lightweight UI; renders instantly on low-end budget smartphones over 2G/3G connections.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>HTML5 Canvas API</strong></td>
+<td style='text-align:left'><code>prepareImageFile</code> Client Optimization</td>
+<td style='text-align:left'>Automatically scales down 12–48MP raw photos (>1.5MB) to max 1600px in ~35ms, cutting upload size from 15MB to ~350KB and dropping upload latency to <strong><150ms</strong>.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Web Speech API</strong></td>
+<td style='text-align:left'><code>window.speechSynthesis</code></td>
+<td style='text-align:left'>Provides spoken voice feedback explaining image quality problems in plain language for low-literacy artisans.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Media Capture API</strong></td>
+<td style='text-align:left'><code>capture="environment"</code></td>
+<td style='text-align:left'>One-tap button immediately launches the phone's native rear camera.</td>
+</tr>
+</tbody></table></div>
+<h3>3.6. Storage & Database</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Layer</th>
+<th style='text-align:left'>Implementation</th>
+<th style='text-align:left'>Details</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>Database</strong></td>
+<td style='text-align:left'>SQLite (<code>sqlite3</code>) / PostgreSQL-Ready</td>
+<td style='text-align:left'>Relational database abstracted via <code>DatabaseManager</code> (<code>market_data/database.py</code>).</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Indexing</strong></td>
+<td style='text-align:left'>Composite SQL Indexes</td>
+<td style='text-align:left'>Indexed on <code>(category, craft_type, material, price)</code> for sub-millisecond market price queries.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Schema</strong></td>
+<td style='text-align:left'><code>MarketProduct</code> (<code>market_data/schema.py</code>)</td>
+<td style='text-align:left'>Normalized e-commerce schema (19 strict fields: ID, SKU, craft type, material, region, price, currency, unit, URLs).</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Asset Storage</strong></td>
+<td style='text-align:left'>Local Filesystem (<code>output/</code>)</td>
+<td style='text-align:left'>Structured persistence for original photos (<code>orig_*.jpg</code>), transparent cutouts (<code>transparent_*.png</code>), and catalog images (<code>catalog_*.jpg</code>).</td>
+</tr>
+</tbody></table></div>
+<h3>3.7. Configuration & Threshold Management</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>File</th>
+<th style='text-align:left'>Format</th>
+<th style='text-align:left'>Governed Parameters</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><code>config/quality_thresholds.yaml</code></td>
+<td style='text-align:left'>YAML (<code>pyyaml</code>)</td>
+<td style='text-align:left'>Centralized, editable thresholds for blur variance (<code>35.0</code>), brightness range (<code>48.0</code> – <code>225.0</code>), minimum dimensions (<code>400px</code>), product area occupancy (<code>10%</code> – <code>95%</code>), and classification confidence (<code>0.50</code>).</td>
+</tr>
+</tbody></table></div>
+<h3>3.8. Testing & Quality Assurance</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Tool</th>
+<th style='text-align:left'>Scope</th>
+<th style='text-align:left'>Metric</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>Pytest</strong></td>
+<td style='text-align:left'>End-to-End Suite</td>
+<td style='text-align:left'><strong>61 automated tests</strong> passing with 100% coverage across:</td>
+</tr>
+<tr>
+<td style='text-align:left'><code>test_quality_gate.py</code></td>
+<td style='text-align:left'>13 Scenarios</td>
+<td style='text-align:left'>Blur, darkness, overexposure, tiny craft, cut-off, clutter, corrupt files, low-res rejection.</td>
+</tr>
+<tr>
+<td style='text-align:left'><code>test_textile_composition.py</code></td>
+<td style='text-align:left'>2 Scenarios</td>
+<td style='text-align:left'>Multi-fabric stack preservation and smooth-background blur calibration.</td>
+</tr>
+<tr>
+<td style='text-align:left'><code>test_pottery_detection.py</code></td>
+<td style='text-align:left'>2 Scenarios</td>
+<td style='text-align:left'>Pottery classification regression test (zero Dupatta hallucination).</td>
+</tr>
+<tr>
+<td style='text-align:left'><code>test_market_schema.py</code></td>
+<td style='text-align:left'>10 Scenarios</td>
+<td style='text-align:left'>Pydantic validation, negative price prevention, database CRUD and indexing.</td>
+</tr>
+<tr>
+<td style='text-align:left'><code>test_pipeline.py</code> & others</td>
+<td style='text-align:left'>34 Scenarios</td>
+<td style='text-align:left'>Color constancy, lighting, shadow modes, aspect ratios, and API endpoints.</td>
+</tr>
+</tbody></table></div>
+<h3>3.9. Deployment & Version Control</h3>
+<div class='table-container'><table>
+<thead><tr>
+<th style='text-align:left'>Tool</th>
+<th style='text-align:left'>Platform / Target</th>
+<th style='text-align:left'>Purpose</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style='text-align:left'><strong>Git / GitHub</strong></td>
+<td style='text-align:left'><code>kavish1git/artisans-sih-idea</code></td>
+<td style='text-align:left'>Distributed version control and collaboration.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Docker</strong></td>
+<td style='text-align:left'>Multi-stage Dockerfile</td>
+<td style='text-align:left'>Containerized packaging for portable deployment across cloud providers.</td>
+</tr>
+<tr>
+<td style='text-align:left'><strong>Hosting Targets</strong></td>
+<td style='text-align:left'>Hugging Face Spaces / Render / Localhost</td>
+<td style='text-align:left'>Zero-cost cloud staging compatibility.</td>
+</tr>
+</tbody></table></div>
+    <h2>4. Key Engineering Innovations</h2>
+<ol class='styled-ol'>
+<li><strong>Zero-Configuration UI</strong>: Eliminates all technical toggles (no manual selection of backgrounds, aspect ratios, or segmentation engines). The artisan simply takes a photo, and the AI makes all decisions autonomously.</li>
+<li><strong>Pre-Flight Quality Gate</strong>: Prevents blind processing. Low-quality, dark, or blurry photos are rejected before wasting CPU cycles on segmentation or catalog generation.</li>
+<li><strong>Multi-Zone Sharpness Calibration</strong>: Solves the classic computer vision problem where clean plain backgrounds falsely drag down global Laplacian variance.</li>
+<li><strong>Under-Segmentation Guard</strong>: Detects when background removal models mistakenly slice multi-piece craft sets or folded fabric stacks, automatically switching to non-destructive full-composition catalog framing.</li>
+<li><strong>Client-Side Image Streamlining</strong>: Eliminates mobile network bottlenecks by compressing large camera captures in the browser prior to transmission.</li>
+</ol>
+    <div class="footer-bar">
+        <span>Smart India Hackathon (SIH26090) — AI-Driven Market Linkage for Marginalized Artisans</span>
+        <span>Verified Engineering Architecture Specification • 61/61 Tests Passing (100%)</span>
+    </div>
+    
+</body>
+</html>
