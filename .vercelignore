@@ -1,0 +1,12 @@
+# Ignore Python backend files so Vercel deploys purely as a fast static web app
+api/
+src/
+tests/
+scripts/
+experiments/
+reports/
+requirements.txt
+Dockerfile
+models/
+output/
+input/
