@@ -44,7 +44,7 @@ class ProductImagePipeline:
     def __init__(
         self,
         output_dir: Union[str, Path] = "output",
-        model_name: str = "u2netp",
+        model_name: str = "isnet-general-use",
     ):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -97,6 +97,9 @@ class ProductImagePipeline:
         shadow_mode: str = "professional",
         target_dim: int = 1080,
         output_format: str = "JPEG",
+        model_name: Optional[str] = None,
+        alpha_matting: bool = True,
+        detection_mode: str = "auto",
         save_files: bool = True,
     ) -> Dict[str, Any]:
         """
@@ -104,6 +107,11 @@ class ProductImagePipeline:
         """
         start_time = time.perf_counter()
         warnings: List[str] = []
+
+        # Configure model and edge matting
+        if model_name and model_name != self.segmenter.model_name:
+            self.segmenter.model_name = model_name
+        self.segmenter.enable_alpha_matting = alpha_matting
 
         # 1. Safe Load & Initial Quality Analysis (Before)
         bgr_orig, rgb_pil = load_image_safely(source)
@@ -116,7 +124,7 @@ class ProductImagePipeline:
 
         # 2. Product Segmentation & Background Removal
         try:
-            transparent_pil, seg_res = self.remover.remove_background(rgb_pil)
+            transparent_pil, seg_res = self.remover.remove_background(rgb_pil, detection_mode=detection_mode)
         except SegmentationError as e:
             # Safe failure fallback: Return original image with clear warning
             proc_time = round((time.perf_counter() - start_time) * 1000, 1)
@@ -251,6 +259,9 @@ def process_product_image(
     shadow_mode: str = "professional",
     output_format: str = "JPEG",
     target_dim: int = 1080,
+    model_name: str = "isnet-general-use",
+    alpha_matting: bool = True,
+    detection_mode: str = "auto",
 ) -> Dict[str, Any]:
     """Exposed functional API matching Module 12 specification."""
     pipeline = get_pipeline()
@@ -262,4 +273,7 @@ def process_product_image(
         shadow_mode=shadow_mode,
         target_dim=target_dim,
         output_format=output_format,
+        model_name=model_name,
+        alpha_matting=alpha_matting,
+        detection_mode=detection_mode,
     )

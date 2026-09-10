@@ -24,19 +24,13 @@ class BackgroundRemover:
         self,
         source: Union[str, Path, bytes, np.ndarray, Image.Image],
         feather_edges: bool = True,
+        detection_mode: str = "auto",
     ) -> Tuple[Image.Image, SegmentationResult]:
         """
         Extracts the foreground product and returns a transparent RGBA PIL Image
         along with segmentation metadata.
-        
-        Args:
-            source: Image input (path, bytes, array, or PIL Image).
-            feather_edges: If True, applies subtle sub-pixel anti-aliasing to perimeter.
-            
-        Returns:
-            Tuple of (transparent_pil_image, segmentation_result)
         """
-        seg_result = self.segmenter.segment(source)
+        seg_result = self.segmenter.segment(source, detection_mode=detection_mode)
         mask = seg_result.mask
 
         # Validate that product exists in mask
@@ -77,7 +71,8 @@ class BackgroundRemover:
 
 def remove_background(
     source: Union[str, Path, bytes, np.ndarray, Image.Image],
+    detection_mode: str = "auto",
 ) -> Tuple[Image.Image, SegmentationResult]:
     """Convenience wrapper for background removal."""
     remover = BackgroundRemover()
-    return remover.remove_background(source)
+    return remover.remove_background(source, detection_mode=detection_mode)

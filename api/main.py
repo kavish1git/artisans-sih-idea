@@ -104,6 +104,9 @@ async def process_image_endpoint(
     aspect_ratio: str = Form("1:1", description="Target aspect ratio: 1:1, 4:5, 3:4, 16:9"),
     enhancement: str = Form("auto", description="Enhancement mode: auto, low, medium, none"),
     shadow_mode: str = Form("professional", description="Shadow style: professional, natural, none"),
+    model_name: str = Form("isnet-general-use", description="Model: isnet-general-use, silueta, u2netp, u2net"),
+    alpha_matting: bool = Form(True, description="Enable edge and thread matting"),
+    detection_mode: str = Form("auto", description="Detection mode: auto, focused, full_set"),
 ):
     """
     Main cataloging transformation pipeline endpoint.
@@ -134,6 +137,9 @@ async def process_image_endpoint(
             shadow_mode=shadow_mode,
             target_dim=1080,
             output_format="JPEG" if background != "transparent" else "PNG",
+            model_name=model_name,
+            alpha_matting=alpha_matting,
+            detection_mode=detection_mode,
             save_files=True,
         )
 

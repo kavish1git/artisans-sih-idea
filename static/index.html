@@ -359,6 +359,31 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">AI Segmentation Engine</label>
+          <select id="modelSelect">
+            <option value="isnet-general-use" selected>IS-Net Ultra-Detail (Jewelry, Threads & Intricate Crafts) - Recommended</option>
+            <option value="silueta">Silueta High-Accuracy (Clean Boundary & Fast)</option>
+            <option value="u2netp">U²-Net Portable (Fast / Low Memory)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Detection Scope</label>
+          <select id="detectionModeSelect">
+            <option value="auto" selected>Auto (Smart Craft Clustering) - Recommended</option>
+            <option value="focused">Single Item Focus (Isolates primary craft, removes stands & clutter)</option>
+            <option value="full_set">Full Display / Multi-Piece Set (Preserves stand, rack & all pieces)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
+          <input type="checkbox" id="mattingCheck" checked style="width: auto; cursor: pointer;">
+          <label for="mattingCheck" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); cursor: pointer;">
+            Fine-Edge Matting (Preserves wires, embroidery, threads)
+          </label>
+        </div>
+
         <button class="btn btn-primary" id="processBtn" disabled>
           <span>🚀 Process Product Image</span>
         </button>
@@ -541,6 +566,9 @@
       formData.append('background', document.getElementById('bgSelect').value);
       formData.append('aspect_ratio', document.getElementById('ratioSelect').value);
       formData.append('shadow_mode', document.getElementById('shadowSelect').value);
+      formData.append('model_name', document.getElementById('modelSelect').value);
+      formData.append('detection_mode', document.getElementById('detectionModeSelect').value);
+      formData.append('alpha_matting', document.getElementById('mattingCheck').checked);
       formData.append('enhancement', 'auto');
 
       setTimeout(() => { progressFill.style.width = '65%'; progressText.innerText = 'Correcting lighting & generating clean backdrop...'; }, 600);

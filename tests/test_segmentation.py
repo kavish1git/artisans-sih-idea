@@ -30,7 +30,7 @@ class TestProductSegmentation:
         assert bbox["width"] > 200
         assert bbox["height"] > 200
         assert result.confidence > 0.4
-        assert result.model_used in ("u2net", "grabcut_saliency")
+        assert result.model_used in ("isnet-general-use", "silueta", "u2netp", "u2net", "grabcut_saliency")
 
     def test_remove_background_rgba(self):
         img_path = TEST_IMAGES_DIR / "pottery_normal.jpg"
