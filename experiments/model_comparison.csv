@@ -1,0 +1,3 @@
+Model Architecture,IoU,Dice / F1,Precision,Recall,Avg Latency (ms),Memory (MB),Suitability
+U2-Net Portable (u2netp),0.9966,0.9983,0.9967,0.9999,797.1,~4.6 MB,Primary Deployment
+Adaptive GrabCut,0.9292,0.9633,0.9292,1.0,2534.2,< 1 MB,Offline Fallback

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Cataloging CV Engine | SIH26090</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --border: #E2E8F0;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    header {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      background: #EEF2FF;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid #C7D2FE;
+    }
+    .badge-success { background: #ECFDF5; color: var(--success); border-color: #A7F3D0; }
+
+    .container {
+      max-width: 1280px;
+      margin: 32px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 1024px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Upload Zone */
+    .drop-zone {
+      border: 2px dashed #CBD5E1;
+      border-radius: 12px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: #F8FAFC;
+      transition: all 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--primary);
+      background: #F5F3FF;
+    }
+    .drop-zone svg {
+      width: 44px;
+      height: 44px;
+      fill: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    /* Controls */
+    .form-group {
+      margin-top: 18px;
+    }
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #FFFFFF;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 22px;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Results Dashboard */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .metric-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .metric-val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Voice prompt banner */
+    .artisan-banner {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .artisan-text {
+      font-size: 0.95rem;
+      color: #1E40AF;
+      font-weight: 500;
+    }
+    .btn-voice {
+      width: auto;
+      margin: 0;
+      padding: 8px 14px;
+      background: #2563EB;
+      color: white;
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
+
+    /* Image Comparison Display */
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .tab-btn.active {
+      background: #EEF2FF;
+      color: var(--primary);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .image-frame {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #FAFAFA;
+      text-align: center;
+      position: relative;
+    }
+    .image-frame img {
+      width: 100%;
+      height: 380px;
+      object-fit: contain;
+      display: block;
+    }
+    .image-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.75);
+      color: white;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 6px;
+      backdrop-filter: blur(4px);
+    }
+
+    .checkerboard {
+      background-image: linear-gradient(45deg, #eee 25%, transparent 25%),
+                        linear-gradient(-45deg, #eee 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #eee 75%),
+                        linear-gradient(-45deg, transparent 75%, #eee 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    /* Colors */
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      display: none;
+      margin-top: 16px;
+    }
+    .progress-bar {
+      height: 8px;
+      background: #E2E8F0;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div style="font-size: 1.4rem;">🏺</div>
+      <div>
+        <h1 style="font-size: 1.15rem; font-weight: 700;">Artisan Smart Cataloging</h1>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">SIH26090 • Computer Vision Engine</p>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge badge-success">✓ Pipeline Active</span>
+      <span class="badge">U²-Net + CPU Optimized</span>
+      <button class="badge" onclick="configureBackendUrl()" style="cursor: pointer; background: #FFF; border: 1px solid #CBD5E1;">⚙️ API Server</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Left Column: Controls & Input -->
+    <section>
+      <div class="card">
+        <h2 class="card-title">Upload Handicraft Photo</h2>
+        
+        <div class="drop-zone" id="dropZone">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+          <p style="font-weight: 600; font-size: 0.95rem;">Drag & drop artisan photograph</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports JPEG, PNG, WebP up to 15MB</p>
+          <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Marketplace Background</label>
+          <select id="bgSelect">
+            <option value="white">Pure White (#FFFFFF) - Amazon/Flipkart Compliant</option>
+            <option value="off-white">Off-White (#F8F9FA) - Soft E-Commerce</option>
+            <option value="light-gray">Light Gray (#F0F0F2) - Minimal Studio</option>
+            <option value="transparent">Transparent (PNG Cutout)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Catalog Aspect Ratio</label>
+          <select id="ratioSelect">
+            <option value="1:1" selected>1:1 Square (1080 x 1080) - Standard</option>
+            <option value="4:5">4:5 Vertical - Social & Mobile Feed</option>
+            <option value="3:4">3:4 Portrait - Traditional Listing</option>
+            <option value="16:9">16:9 Landscape - Banner</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Grounding Shadow Mode</label>
+          <select id="shadowSelect">
+            <option value="professional" selected>Professional (Subtle Grounding Contact Shadow)</option>
+            <option value="natural">Natural (Soft Ambient Occlusion)</option>
+            <option value="none">None (Flat Cutout)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="processBtn" disabled>
+          <span>🚀 Process Product Image</span>
+        </button>
+
+        <div class="progress-wrap" id="progressWrap">
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;" id="progressText">Executing pipeline...</p>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Visual Inspection & Metrics -->
+    <section>
+      <!-- Voice feedback banner -->
+      <div class="artisan-banner" id="voiceBanner" style="display: none;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #2563EB;">Artisan Spoken Guidance (Voice Prompt):</span>
+          <p class="artisan-text" id="voiceText">Product detected clearly! Photo quality is great for cataloging.</p>
+        </div>
+        <button class="btn btn-voice" id="speakBtn">🔊 Read Aloud</button>
+      </div>
+
+      <!-- Metrics Row -->
+      <div class="metrics-bar" id="metricsBar" style="display: none;">
+        <div class="metric-card">
+          <div class="metric-val" id="beforeScore">--</div>
+          <div class="metric-label">Input Quality</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" style="color: var(--success);" id="afterScore">--</div>
+          <div class="metric-label">Catalog Quality</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" style="color: var(--primary);" id="improvementVal">--</div>
+          <div class="metric-label">Quality Boost</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-val" id="procTime">--</div>
+          <div class="metric-label">Inference Time</div>
+        </div>
+      </div>
+
+      <!-- Image Display Cards -->
+      <div class="card">
+        <div class="view-tabs">
+          <button class="tab-btn active" onclick="switchView('split')">Side-by-Side Comparison</button>
+          <button class="tab-btn" onclick="switchView('transparent')">Transparent Cutout</button>
+          <button class="tab-btn" onclick="switchView('final')">1080x1080 Final Output</button>
+        </div>
+
+        <div id="splitView" class="comparison-grid">
+          <div class="image-frame">
+            <span class="image-tag">Original Smartphone Photo</span>
+            <img id="origPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ctext y='50' font-size='12'%3ENo image selected%3C/text%3E%3C/svg%3E" alt="Original">
+          </div>
+          <div class="image-frame">
+            <span class="image-tag">Marketplace Ready (1080×1080)</span>
+            <img id="resultPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ctext y='50' font-size='12'%3EAwaiting processing%3C/text%3E%3C/svg%3E" alt="Marketplace Output">
+          </div>
+        </div>
+
+        <div id="transparentView" style="display: none;">
+          <div class="image-frame checkerboard">
+            <span class="image-tag">Alpha Matting Cutout</span>
+            <img id="transPreview" src="" alt="Transparent PNG">
+          </div>
+        </div>
+
+        <div id="finalView" style="display: none;">
+          <div class="image-frame">
+            <span class="image-tag">1080x1080 Marketplace Standard</span>
+            <img id="singleFinalPreview" src="" alt="Final Output">
+          </div>
+        </div>
+
+        <!-- Dominant Colors & Action -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+          <div>
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Extracted Dominant Colors:</span>
+            <div class="color-swatches" id="colorSwatches">
+              <span style="font-size: 0.85rem; color: var(--text-muted);">Upload an image to extract</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <a id="downloadBtn" class="btn btn-primary" style="width: auto; margin: 0; padding: 10px 20px; display: none;" download="catalog_product.jpg">
+              ⬇ Download 1080x1080 Catalog Image
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let selectedFile = null;
+    let latestResult = null;
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const processBtn = document.getElementById('processBtn');
+    const origPreview = document.getElementById('origPreview');
+    const resultPreview = document.getElementById('resultPreview');
+    const transPreview = document.getElementById('transPreview');
+    const singleFinalPreview = document.getElementById('singleFinalPreview');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+    dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+    dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+    dropZone.ondrop = (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    };
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      selectedFile = file;
+      processBtn.disabled = false;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        origPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Pre-flight quality check
+      runPreflightQuality(file);
+    }
+
+    function getApiUrl(endpoint) {
+      const custom = localStorage.getItem('artisan_cv_api_url');
+      if (custom && custom.trim()) {
+        return custom.trim().replace(/\/$/, '') + endpoint;
+      }
+      return endpoint;
+    }
+
+    function configureBackendUrl() {
+      const current = localStorage.getItem('artisan_cv_api_url') || window.location.origin;
+      const val = prompt("Enter the backend API server URL (e.g. https://your-backend.onrender.com or http://localhost:8000):", current);
+      if (val !== null) {
+        localStorage.setItem('artisan_cv_api_url', val.trim());
+        alert("API endpoint updated to: " + (val.trim() || window.location.origin));
+      }
+    }
+
+    async function runPreflightQuality(file) {
+      const formData = new FormData();
+      formData.append('image', file);
+      try {
+        const res = await fetch(getApiUrl('/api/v1/quality'), { method: 'POST', body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          showVoiceBanner(data.recommendation);
+          document.getElementById('beforeScore').innerText = `${data.overall_score}/100`;
+          document.getElementById('metricsBar').style.display = 'grid';
+        }
+      } catch (err) {
+        console.warn("Pre-flight check error:", err);
+      }
+    }
+
+    processBtn.onclick = async () => {
+      if (!selectedFile) return;
+
+      processBtn.disabled = true;
+      const progressWrap = document.getElementById('progressWrap');
+      const progressFill = document.getElementById('progressFill');
+      const progressText = document.getElementById('progressText');
+
+      progressWrap.style.display = 'block';
+      progressFill.style.width = '20%';
+      progressText.innerText = 'Analyzing image & segmenting product...';
+
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      formData.append('background', document.getElementById('bgSelect').value);
+      formData.append('aspect_ratio', document.getElementById('ratioSelect').value);
+      formData.append('shadow_mode', document.getElementById('shadowSelect').value);
+      formData.append('enhancement', 'auto');
+
+      setTimeout(() => { progressFill.style.width = '65%'; progressText.innerText = 'Correcting lighting & generating clean backdrop...'; }, 600);
+
+      try {
+        const response = await fetch(getApiUrl('/api/v1/process-image'), {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          alert(`Processing error: ${err.detail || 'Failed to process image'}`);
+          progressWrap.style.display = 'none';
+          processBtn.disabled = false;
+          return;
+        }
+
+        progressFill.style.width = '100%';
+        progressText.innerText = 'Catalog image ready!';
+
+        const result = await response.json();
+        latestResult = result;
+
+        // Update Previews
+        resultPreview.src = result.image_url;
+        transPreview.src = result.transparent_url;
+        singleFinalPreview.src = result.image_url;
+
+        // Download button
+        downloadBtn.href = result.image_url;
+        downloadBtn.style.display = 'inline-flex';
+
+        // Update Metrics
+        document.getElementById('beforeScore').innerText = `${result.before_score}/100`;
+        document.getElementById('afterScore').innerText = `${result.after_score}/100`;
+        document.getElementById('improvementVal').innerText = `+${result.improvement}`;
+        document.getElementById('procTime').innerText = `${(result.processing_time_ms / 1000).toFixed(1)}s`;
+        document.getElementById('metricsBar').style.display = 'grid';
+
+        // Spoken recommendation
+        showVoiceBanner(result.recommendation);
+
+        // Dominant Colors
+        renderColors(result.dominant_colors);
+
+      } catch (e) {
+        alert("Failed to reach server: " + e.message);
+      } finally {
+        setTimeout(() => { progressWrap.style.display = 'none'; }, 1000);
+        processBtn.disabled = false;
+      }
+    };
+
+    function showVoiceBanner(text) {
+      const banner = document.getElementById('voiceBanner');
+      const voiceText = document.getElementById('voiceText');
+      voiceText.innerText = text;
+      banner.style.display = 'flex';
+    }
+
+    document.getElementById('speakBtn').onclick = () => {
+      const text = document.getElementById('voiceText').innerText;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.rate = 0.95;
+        window.speechSynthesis.speak(utter);
+      } else {
+        alert("Text-to-speech not supported in this browser.");
+      }
+    };
+
+    function renderColors(colors) {
+      const container = document.getElementById('colorSwatches');
+      container.innerHTML = '';
+      if (!colors || !colors.length) return;
+      colors.forEach(hex => {
+        const sw = document.createElement('div');
+        sw.className = 'swatch';
+        sw.style.backgroundColor = hex;
+        sw.title = hex;
+        container.appendChild(sw);
+      });
+    }
+
+    function switchView(view) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.getElementById('splitView').style.display = view === 'split' ? 'grid' : 'none';
+      document.getElementById('transparentView').style.display = view === 'transparent' ? 'block' : 'none';
+      document.getElementById('finalView').style.display = view === 'final' ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Testing & cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables & local secrets
+.env
+.env.local
+
+# Output files generated during processing
+output/*
+!output/.gitkeep
+
+# Models downloaded locally
+models/*
+!models/.gitkeep
+.u2net/
+.rembg/
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
